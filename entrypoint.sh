@@ -2,8 +2,6 @@
 
 set -ex
 
-shopt -s nocasematch
-
 # Check required environment variables
 if [ -z $INPUT_DT_UPLOAD_API_KEY ]; then
   echo "Missing input: DT_UPLOAD_API_KEY"
@@ -35,7 +33,7 @@ do
   upload_url=$(echo ${response_body} | jq -r ".upload_url")
 
   # Step 2: upload the APK
-  step2_response=$(curl -F file=@${INPUT_UPLOAD_BINARY_PATH} ${upload_url}) && echo ${step2_response} && break
+  step2_response=$(curl -F file=@"${INPUT_UPLOAD_BINARY_PATH}" ${upload_url}) && echo ${step2_response} && break
 done
 
 if [ ${retry} -ge ${maxRetries} ]; then

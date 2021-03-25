@@ -1,8 +1,7 @@
-FROM ubuntu:20.04
+FROM alpine:3.7
 
-RUN apt-get update && apt-get install -y curl jq
+RUN apk add --update bash curl jq
 
-COPY entrypoint.sh /entrypoint.sh
 COPY . .
 
 ENTRYPOINT ["/entrypoint.sh"]
