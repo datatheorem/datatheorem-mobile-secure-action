@@ -6,7 +6,7 @@ set -ex
 if [ -z $INPUT_DT_UPLOAD_API_KEY ]; then
   echo "Missing input: DT_UPLOAD_API_KEY"
   exit 1
-elif [[ ${dt_upload_api_key} =~ APIKey* ]]; then
+elif [[ ${INPUT_DT_UPLOAD_API_KEY} =~ APIKey* ]]; then
   echo "Variable dt_upload_api_key should not start with 'APIKey'"
   exit 1
 fi
