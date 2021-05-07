@@ -3,7 +3,7 @@
 set -ex
 
 # Check required environment variables
-if [ -z $INPUT_DT_UPLOAD_API_KEY ]; then
+if [ -z ${INPUT_DT_UPLOAD_API_KEY} ]; then
   echo "Missing input: DT_UPLOAD_API_KEY"
   exit 1
 elif [[ ${INPUT_DT_UPLOAD_API_KEY} =~ APIKey* ]]; then
