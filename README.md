@@ -45,7 +45,7 @@ jobs:
         with: 
           name: app
       - name: Upload to Data Theorem
-        uses: datatheorem/data-theorem-mobile-secure-action@v1
+        uses: datatheorem/datatheorem-mobile-secure-action@v1
         with:
           UPLOAD_BINARY_PATH: "./app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
