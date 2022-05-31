@@ -10,8 +10,8 @@ inputs:
     description: 'Path to the app to upload'
     required: true
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: 'node16'
+  main: 'main.js'
 branding:
   color: 'blue'
   icon: 'arrow-up-circle'

@@ -35,18 +35,9 @@ jobs:
           java-version: 1.8
       - name: Build debug APK
         run: bash ./gradlew assembleDebug
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: app
-          path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with: 
-          name: app
       - name: Upload to Data Theorem
-        uses: datatheorem/datatheorem-mobile-secure-action@v1
+        uses: datatheorem/datatheorem-mobile-secure-action@v2
         with:
-          UPLOAD_BINARY_PATH: "./app-debug.apk"
+          UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
 ```
