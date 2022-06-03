@@ -36,7 +36,7 @@ jobs:
       - name: Build debug APK
         run: bash ./gradlew assembleDebug
       - name: Upload to Data Theorem
-        uses: datatheorem/datatheorem-mobile-secure-action@v2
+        uses: datatheorem/datatheorem-mobile-secure-action@v2.0.1
         with:
           UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
