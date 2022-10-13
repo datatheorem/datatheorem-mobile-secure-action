@@ -7,7 +7,16 @@ inputs:
     description: 'Data Theorem upload API key'
     required: true
   UPLOAD_BINARY_PATH:
-    description: 'Path to the app to upload (can be a glob pattern like `/app/build/outputs/apk/debug/*.apk`)'
+    description: >
+      Path to the app to upload.
+      
+      You can use a glob pattern to indicate variable parts of the build's file name (for example, if the app's version number or build date is in the file name).
+      Examples of glob patterns:
+      - `app-*.apk` : search for any apk starting with `app-` in workspace root directory
+      - `**/app-*.ipa` : search for any ipa starting with `app-` in any subdirectory of the workspace
+      - `{,**/}app-debug*.*` : search for any file containing `app-debug` in root the directory or in any subdirectory of the workspace
+      
+      If multiple files match the provided pattern all matching files will be uploaded.
     required: true
 runs:
   using: 'node16'
