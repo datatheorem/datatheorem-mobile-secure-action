@@ -36,6 +36,7 @@ function run() {
             console.log("Found files matching path: " + input_binary_path);
             console.log(files);
             // Upload all the files that matched the file path
+            let output = [];
             for (const file_path of files) {
                 if (!fs.existsSync(file_path)) {
                     throw new Error("Could not find file:" + file_path);
@@ -79,6 +80,7 @@ function run() {
                     catch (err) {
                         core.setFailed(err);
                     }
+                    output.push(jsonformat);
                     // Check the response
                     if (response.status === 200) {
                         console.log(jsonformat);
@@ -89,7 +91,7 @@ function run() {
                     }
                 }
             }
-            core.setOutput("response", "All done !");
+            core.setOutput("upload_responses", output);
         }
         catch (err) {
             core.setFailed(err.message);

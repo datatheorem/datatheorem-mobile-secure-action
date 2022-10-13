@@ -33,6 +33,7 @@ async function run() {
     console.log(files);
 
     // Upload all the files that matched the file path
+    let output: Array<any> = []
     for (const file_path of files) {
       if (!fs.existsSync(file_path)) {
         throw new Error("Could not find file:" + file_path);
@@ -82,6 +83,7 @@ async function run() {
         } catch (err) {
           core.setFailed(err);
         }
+        output.push(jsonformat)
 
         // Check the response
         if (response.status === 200) {
@@ -92,7 +94,8 @@ async function run() {
         }
       }
     }
-    core.setOutput("response", "All done !");
+    core.setOutput("responses", output);
+    core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
   } catch (err) {
     core.setFailed(err.message);
   }
