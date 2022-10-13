@@ -7,7 +7,7 @@ inputs:
     description: 'Data Theorem upload API key'
     required: true
   UPLOAD_BINARY_PATH:
-    description: 'Path to the app to upload'
+    description: 'Path to the app to upload (can be a glob pattern like `/app/build/outputs/apk/debug/*.apk`)'
     required: true
 runs:
   using: 'node16'
