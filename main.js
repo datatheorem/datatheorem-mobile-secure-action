@@ -33,8 +33,9 @@ function run() {
             if (!files.length) {
                 throw new Error("Did not find any files that match path:" + input_binary_path);
             }
-            console.log("Found files matching path: " + input_binary_path);
-            console.log(files);
+            if (files.length > 3) {
+                throw new Error("Too many files match the provided glob pattern, please write a more restrictive pattern");
+            }
             // Upload all the files that matched the file path
             let output = [];
             for (const file_path of files) {
@@ -91,7 +92,8 @@ function run() {
                     }
                 }
             }
-            core.setOutput("upload_responses", output);
+            core.setOutput("responses", output);
+            core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
         }
         catch (err) {
             core.setFailed(err.message);

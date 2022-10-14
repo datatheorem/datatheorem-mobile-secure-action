@@ -29,8 +29,11 @@ async function run() {
         "Did not find any files that match path:" + input_binary_path
       );
     }
-    console.log("Found files matching path: " + input_binary_path);
-    console.log(files);
+    if (files.length > 3) {
+      throw new Error(
+        "Too many files match the provided glob pattern, please write a more restrictive pattern"
+      );
+    }
 
     // Upload all the files that matched the file path
     let output: Array<any> = []
