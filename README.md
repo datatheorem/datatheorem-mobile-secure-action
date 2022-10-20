@@ -14,6 +14,16 @@ Create an encrypted variable named `DT_UPLOAD_API_KEY` in your Github repository
 
 For more information, see [Github Encrypted secrets](https://docs.github.com/en/actions/reference/encrypted-secrets)
 
+## Set the path to the binary files to upload
+Configure the Action by indicating path to the file that will be uploaded in the `UPLOAD_BINARY_PATH` input.
+
+You can use a glob pattern to indicate variable parts of the build's file name (for example, if the app's version number or build date is in the file name).  
+Examples of glob patterns:
+- `app-*.apk` : search for any apk starting with `app-` in workspace root directory
+- `**/app-*.ipa` : search for any ipa starting with `app-` in any subdirectory of the workspace
+- `{,**/}app-debug*.*` : search for any file containing `app-debug` in root the directory or in any subdirectory of the workspace
+If multiple files match the provided pattern all matching files will be uploaded.
+
 ## Sample usage
 
 ```yaml
@@ -36,7 +46,7 @@ jobs:
       - name: Build debug APK
         run: bash ./gradlew assembleDebug
       - name: Upload to Data Theorem
-        uses: datatheorem/datatheorem-mobile-secure-action@v2.0.1
+        uses: datatheorem/datatheorem-mobile-secure-action@v2.1.0
         with:
           UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
