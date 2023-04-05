@@ -16,8 +16,35 @@ inputs:
       - `**/app-*.ipa` : search for any ipa starting with `app-` in any subdirectory of the workspace
       - `{,**/}app-debug*.*` : search for any file containing `app-debug` in root the directory or in any subdirectory of the workspace
       
-      If multiple files match the provided pattern all matching files will be uploaded.
+      If multiple files match the provided pattern all matching files will be uploaded. The pattern should not match more than 3 files.
     required: true
+  USERNAME:
+    description: >
+      Username to be used for authenticated testing of the application.  If provided, will override the previosly provided value.
+    required: false
+  PASSWORD:
+    description: >
+      Password to be used for authenticated testing of the application.  If provided, will override the previosly provided value. Use of GitHub secrets is recommended.
+    required: false
+  COMMENTS:
+    description: >
+      Miscellaneous, free-form comments regarding the upload.
+    required: false
+  RELEASE_ID:
+    description: >
+      A custom ID associated with the binary being submitted, since the app version may not change very often. 
+      It is recommended that you use a unique value for this, such as the CI/CD job ID.
+      If not set, Data Theorem will assign the binary a release_id.
+    required: false
+  PLATFORM_VARIANT:
+    description: >
+      The variant of the platform to use for scanning; Currently, the accepted value is 
+      IOS_ON_MAC (scan an iOS build on an Apple Silicon Mac instead of on an iOS device, in order to exercise code paths that are specific to Macs.)
+    required: false
+  EXTERNAL_ID:
+    description: >
+      The external_id field represents your organization’s custom identifier for the app, if any.
+    required: false   
 runs:
   using: 'node16'
   main: 'main.js'
