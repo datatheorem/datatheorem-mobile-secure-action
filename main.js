@@ -46,7 +46,7 @@ var maxUploadFiles = 3; // no more than 3 files can be uploaded at a time
 var maxRetries = 3; // max number of uploads to retry
 function run() {
     return __awaiter(this, void 0, void 0, function () {
-        var dt_upload_api_key, input_binary_path, username, password, comments, release_id, platform_variant, external_id, files, file_idx, output, _i, files_1, file_path, loop_idx, auth_response, auth_json, err_1, form, response, jsonformat, err_2, err_3;
+        var dt_upload_api_key, input_binary_path, username, password, comments, release_id, platform_variant, external_id, files, file_idx, output, _i, files_1, file_path, form, auth_response, auth_json, err_1, loop_idx, response, jsonformat, err_2, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -88,38 +88,6 @@ function run() {
                         throw new Error("Could not access file:" + file_path);
                     }
                     console.log("Processing file " + file_path + " (" + file_idx + " of " + files.length + ").");
-                    loop_idx = 0;
-                    _a.label = 2;
-                case 2:
-                    if (!(loop_idx < maxRetries)) return [3 /*break*/, 14];
-                    return [4 /*yield*/, fetch("https://api.securetheorem.com/uploadapi/v1/upload_init", {
-                            method: "POST",
-                            headers: {
-                                Authorization: "APIKey " + dt_upload_api_key,
-                                Accept: "application/json",
-                                "Content-Type": "application/json"
-                            }
-                        })];
-                case 3:
-                    auth_response = _a.sent();
-                    auth_json = void 0;
-                    _a.label = 4;
-                case 4:
-                    _a.trys.push([4, 6, , 7]);
-                    return [4 /*yield*/, auth_response.json()];
-                case 5:
-                    auth_json = _a.sent();
-                    return [3 /*break*/, 7];
-                case 6:
-                    err_1 = _a.sent();
-                    core.setFailed(err_1);
-                    return [3 /*break*/, 7];
-                case 7:
-                    if (auth_response.status !== 200) {
-                        // handles auth failure
-                        core.setFailed(auth_json);
-                        return [3 /*break*/, 14];
-                    }
                     form = new FormData();
                     form.append("file", fs.createReadStream(file_path));
                     // only append optional fields if explicitly set 
@@ -147,6 +115,38 @@ function run() {
                         form.append("external_id", external_id);
                         console.log("External ID is set to: " + external_id);
                     }
+                    return [4 /*yield*/, fetch("https://api.securetheorem.com/uploadapi/v1/upload_init", {
+                            method: "POST",
+                            headers: {
+                                Authorization: "APIKey " + dt_upload_api_key,
+                                Accept: "application/json",
+                                "Content-Type": "application/json"
+                            }
+                        })];
+                case 2:
+                    auth_response = _a.sent();
+                    auth_json = void 0;
+                    _a.label = 3;
+                case 3:
+                    _a.trys.push([3, 5, , 6]);
+                    return [4 /*yield*/, auth_response.json()];
+                case 4:
+                    auth_json = _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
+                    err_1 = _a.sent();
+                    core.setFailed(err_1);
+                    return [3 /*break*/, 6];
+                case 6:
+                    if (auth_response.status !== 200) {
+                        // handles auth failure
+                        core.setFailed(auth_json);
+                        return [3 /*break*/, 15];
+                    }
+                    loop_idx = 0;
+                    _a.label = 7;
+                case 7:
+                    if (!(loop_idx < maxRetries)) return [3 /*break*/, 14];
                     // Send the scan request with file
                     console.log("Starting upload...");
                     return [4 /*yield*/, fetch(auth_json.upload_url, {
@@ -181,7 +181,7 @@ function run() {
                     _a.label = 13;
                 case 13:
                     loop_idx++;
-                    return [3 /*break*/, 2];
+                    return [3 /*break*/, 7];
                 case 14:
                     _i++;
                     return [3 /*break*/, 1];

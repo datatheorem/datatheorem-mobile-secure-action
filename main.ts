@@ -62,62 +62,62 @@ async function run() {
 
       console.log("Processing file " + file_path + " (" + file_idx + " of " + files.length + ").");
 
+      const form = new FormData();
+      form.append("file", fs.createReadStream(file_path));
+      // only append optional fields if explicitly set 
+      if(username) {
+        form.append("username", username);
+        console.log("DAST username set to: " + username);  
+      }
+      if(password) {
+          form.append("password", password);
+          console.log("DAST password is set");
+      }
+      if(comments) {
+          form.append("comments", comments);
+          console.log("Comments are set to: " + comments);
+      }
+      if(release_id) {
+          form.append("release_Id", release_id);
+          console.log("Release ID is set to: " + release_id);
+      }
+      if(platform_variant) {
+          form.append("platform_variant", platform_variant);
+          console.log("Platform variant is set to: " + platform_variant);
+      }
+      if(external_id) {
+          form.append("external_id", external_id);
+          console.log("External ID is set to: " + external_id);
+      }
+
+      // Send the auth request to get the upload URL
+      const auth_response = await fetch(
+        "https://api.securetheorem.com/uploadapi/v1/upload_init",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "APIKey " + dt_upload_api_key,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      let auth_json;
+      try {
+        auth_json = await auth_response.json();
+      } catch (err) {
+        core.setFailed(err);
+      }
+
+      if (auth_response.status !== 200) {
+        // handles auth failure
+        core.setFailed(auth_json);
+        break;
+      }
+
       // retry upload maxRetries times
       for (let loop_idx = 0; loop_idx < maxRetries; loop_idx++) {
-
-        // Send the auth request to get the upload URL
-        const auth_response = await fetch(
-          "https://api.securetheorem.com/uploadapi/v1/upload_init",
-          {
-            method: "POST",
-            headers: {
-              Authorization: "APIKey " + dt_upload_api_key,
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        let auth_json;
-        try {
-          auth_json = await auth_response.json();
-        } catch (err) {
-          core.setFailed(err);
-        }
-
-        if (auth_response.status !== 200) {
-          // handles auth failure
-          core.setFailed(auth_json);
-          break;
-        }
-
-        const form = new FormData();
-        form.append("file", fs.createReadStream(file_path));
-        // only append optional fields if explicitly set 
-        if(username) {
-          form.append("username", username);
-          console.log("DAST username set to: " + username);  
-        }
-        if(password) {
-            form.append("password", password);
-            console.log("DAST password is set");
-        }
-        if(comments) {
-            form.append("comments", comments);
-            console.log("Comments are set to: " + comments);
-        }
-        if(release_id) {
-            form.append("release_Id", release_id);
-            console.log("Release ID is set to: " + release_id);
-        }
-        if(platform_variant) {
-            form.append("platform_variant", platform_variant);
-            console.log("Platform variant is set to: " + platform_variant);
-        }
-        if(external_id) {
-            form.append("external_id", external_id);
-            console.log("External ID is set to: " + external_id);
-        }
 
         // Send the scan request with file
         console.log("Starting upload...");
@@ -126,8 +126,8 @@ async function run() {
           body: form,
         });
         console.log("Finished upload.");
+ 
         let jsonformat;
-
         try {
           jsonformat = await response.json();
         } catch (err) {
@@ -144,6 +144,7 @@ async function run() {
         }
       }
     }
+
     core.setOutput("responses", output);
     core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
   } catch (err) {
