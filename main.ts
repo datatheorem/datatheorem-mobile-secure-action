@@ -4,13 +4,27 @@ const glob = require("glob");
 import FormData = require("form-data");
 import fs = require("fs");
 
+// Global constants
+const maxUploadFiles: number = 3; // no more than 3 files can be uploaded at a time
+
 async function run() {
   try {
     // Get inputs
+    // Mandatory
     const dt_upload_api_key: string = core.getInput("DT_UPLOAD_API_KEY");
     const input_binary_path: string = core.getInput("UPLOAD_BINARY_PATH");
-    // Mask the API key
+    // Optional
+    const username: string = core.getInput("USERNAME");
+    const password: string = core.getInput("PASSWORD");
+    const comments: string = core.getInput("COMMENTS");
+    const release_id: string = core.getInput("RELEASE_ID");
+    const platform_variant: string = core.getInput("PLATFORM_VARIANT");
+    const external_id: string = core.getInput("EXTERNAL_ID");
+
+    // Mask the sensitive fields
     core.setSecret(dt_upload_api_key);
+    core.setSecret(password);
+
     // Check that the inputs are set
     if (!dt_upload_api_key){
       throw new Error(
@@ -29,11 +43,13 @@ async function run() {
         "Did not find any files that match path:" + input_binary_path
       );
     }
-    if (files.length > 3) {
+    if (files.length > maxUploadFiles) {
       throw new Error(
-        "Too many files match the provided glob pattern, please write a more restrictive pattern"
+        "Too many files (" + files.length + ") match the provided glob pattern; please write a more restrictive pattern to match no more than " + maxUploadFiles + " files."
       );
     }
+    
+    console.log("Found " + files.length + " files to upload.");
 
     // Upload all the files that matched the file path
     let output: Array<any> = []
@@ -42,7 +58,9 @@ async function run() {
         throw new Error("Could not find file:" + file_path);
       }
       // retry upload 3 times
-      for (let loop_idx = 0; loop_idx < 3; loop_idx++) {
+      for (let loop_idx = 0; loop_idx < maxUploadFiles; loop_idx++) {
+        console.log("Processing file " + file_path + " (" + loop_idx+1 + " of " + maxUploadFiles + ").");
+
         // Send the auth request to get the upload URL
         const auth_response = await fetch(
           "https://api.securetheorem.com/uploadapi/v1/upload_init",
@@ -71,14 +89,39 @@ async function run() {
 
         const form = new FormData();
         form.append("file", fs.createReadStream(file_path));
+        // only append optional fields if explicitly set 
+        if(username) {
+          form.append("username", username);
+          console.log("DAST username set to: " + username);  
+        }
+        if(password) {
+            form.append("password", password);
+            console.log("DAST password is set");
+        }
+        if(comments) {
+            form.append("comments", comments);
+            console.log("Comments are set to: " + comments);
+        }
+        if(release_id) {
+            form.append("release_Id", release_id);
+            console.log("Release ID is set to: " + release_id);
+        }
+        if(platform_variant) {
+            form.append("platform_variant", platform_variant);
+            console.log("Platform variant is set to: " + platform_variant);
+        }
+        if(external_id) {
+            form.append("external_id", external_id);
+            console.log("External ID is set to: " + external_id);
+        }
 
         // Send the scan request with file
-        console.log("Starting upload of:" + file_path);
+        console.log("Starting upload...");
         const response = await fetch(auth_json.upload_url, {
           method: "POST",
           body: form,
         });
-        console.log("Finished upload of:" + file_path);
+        console.log("Finished upload.");
         let jsonformat;
 
         try {
@@ -92,7 +135,7 @@ async function run() {
         if (response.status === 200) {
           console.log(jsonformat);
           break;
-        } else if (loop_idx == 2) {
+        } else if (loop_idx == (maxUploadFiles - 1)) {
           core.setFailed(jsonformat);
         }
       }

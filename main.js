@@ -8,135 +8,192 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const core = require("@actions/core");
-const fetch = require("node-fetch");
-const glob = require("glob");
-const FormData = require("form-data");
-const fs = require("fs");
-
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+exports.__esModule = true;
+var core = require("@actions/core");
+var fetch = require("node-fetch");
+var glob = require("glob");
+var FormData = require("form-data");
+var fs = require("fs");
 // Global constants
-const maxUploadFiles = 3; // no more than 3 files can be uploaded at a time
-
+var maxUploadFiles = 3; // no more than 3 files can be uploaded at a time
 function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            // Get inputs
-            // Required
-            const dt_upload_api_key = core.getInput("DT_UPLOAD_API_KEY");
-            const input_binary_path = core.getInput("UPLOAD_BINARY_PATH");
-            // Optional
-            const username = core.getInput("USERNAME");
-            const password = core.getInput("PASSWORD");
-            const comments = core.getInput("COMMENTS");
-            const release_id = core.getInput("RELEASE_ID");
-            const platform_variant = core.getInput("PLATFORM_VARIANT");
-            const external_id = core.getInput("EXTERNAL_ID");
-            // Mask sensitive fields
-            core.setSecret(dt_upload_api_key);
-            core.setSecret(password);
-            // Check that the required inputs are set
-            if (!dt_upload_api_key) {
-                throw new Error("DT_UPLOAD_API_KEY must be set!");
-            }
-            if (!input_binary_path) {
-                throw new Error("UPLOAD_BINARY_PATH must be set!");
-            }
-            // get the list of files to upload
-            const files = glob.sync(input_binary_path);
-            if (!files.length) {
-                throw new Error("Did not find any files that match path:" + input_binary_path);
-            }
-            if (files.length > maxUploadFiles) {
-                throw new Error("Too many files (" + files.length + ") match the provided glob pattern; please write a more restrictive pattern to match no more than " + maxUploadFiles + " files.");
-            }
-            // Upload all the files that matched the file path
-            let output = [];
-            for (const file_path of files) {
-                if (!fs.existsSync(file_path)) {
-                    throw new Error("Could not find file:" + file_path);
-                }
-                // retry upload 3 times
-                for (let loop_idx = 0; loop_idx < 3; loop_idx++) {
-                    // Send the auth request to get the upload URL
-                    const auth_response = yield fetch("https://api.securetheorem.com/uploadapi/v1/upload_init", {
-                        method: "POST",
-                        headers: {
-                            Authorization: "APIKey " + dt_upload_api_key,
-                            Accept: "application/json",
-                            "Content-Type": "application/json",
-                        },
-                    });
-                    let auth_json;
-                    try {
-                        auth_json = yield auth_response.json();
+    return __awaiter(this, void 0, void 0, function () {
+        var dt_upload_api_key, input_binary_path, username, password, comments, release_id, platform_variant, external_id, files, output, _i, files_1, file_path, loop_idx, auth_response, auth_json, err_1, form, response, jsonformat, err_2, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 16, , 17]);
+                    dt_upload_api_key = core.getInput("DT_UPLOAD_API_KEY");
+                    input_binary_path = core.getInput("UPLOAD_BINARY_PATH");
+                    username = core.getInput("USERNAME");
+                    password = core.getInput("PASSWORD");
+                    comments = core.getInput("COMMENTS");
+                    release_id = core.getInput("RELEASE_ID");
+                    platform_variant = core.getInput("PLATFORM_VARIANT");
+                    external_id = core.getInput("EXTERNAL_ID");
+                    // Mask the sensitive fields
+                    core.setSecret(dt_upload_api_key);
+                    core.setSecret(password);
+                    // Check that the inputs are set
+                    if (!dt_upload_api_key) {
+                        throw new Error("DT_UPLOAD_API_KEY must be set!");
                     }
-                    catch (err) {
-                        core.setFailed(err);
+                    if (!input_binary_path) {
+                        throw new Error("UPLOAD_BINARY_PATH must be set!");
                     }
+                    files = glob.sync(input_binary_path);
+                    if (!files.length) {
+                        throw new Error("Did not find any files that match path:" + input_binary_path);
+                    }
+                    if (files.length > maxUploadFiles) {
+                        throw new Error("Too many files (" + files.length + ") match the provided glob pattern; please write a more restrictive pattern to match no more than " + maxUploadFiles + " files.");
+                    }
+                    console.log("Found " + files.length + " files to upload.");
+                    output = [];
+                    _i = 0, files_1 = files;
+                    _a.label = 1;
+                case 1:
+                    if (!(_i < files_1.length)) return [3 /*break*/, 15];
+                    file_path = files_1[_i];
+                    if (!fs.existsSync(file_path)) {
+                        throw new Error("Could not find file:" + file_path);
+                    }
+                    loop_idx = 0;
+                    _a.label = 2;
+                case 2:
+                    if (!(loop_idx < maxUploadFiles)) return [3 /*break*/, 14];
+                    console.log("Processing file " + file_path + " (" + loop_idx + 1 + " of " + maxUploadFiles + ").");
+                    return [4 /*yield*/, fetch("https://api.securetheorem.com/uploadapi/v1/upload_init", {
+                            method: "POST",
+                            headers: {
+                                Authorization: "APIKey " + dt_upload_api_key,
+                                Accept: "application/json",
+                                "Content-Type": "application/json"
+                            }
+                        })];
+                case 3:
+                    auth_response = _a.sent();
+                    auth_json = void 0;
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 6, , 7]);
+                    return [4 /*yield*/, auth_response.json()];
+                case 5:
+                    auth_json = _a.sent();
+                    return [3 /*break*/, 7];
+                case 6:
+                    err_1 = _a.sent();
+                    core.setFailed(err_1);
+                    return [3 /*break*/, 7];
+                case 7:
                     if (auth_response.status !== 200) {
                         // handles auth failure
                         core.setFailed(auth_json);
-                        break;
+                        return [3 /*break*/, 14];
                     }
-                    const form = new FormData();
+                    form = new FormData();
                     form.append("file", fs.createReadStream(file_path));
                     // only append optional fields if explicitly set 
-                    if(username) {
+                    if (username) {
                         form.append("username", username);
-                        console.log("DAST username set to: " + username);  
+                        console.log("DAST username set to: " + username);
                     }
-                    if(password) {
+                    if (password) {
                         form.append("password", password);
                         console.log("DAST password is set");
                     }
-                    if(comments) {
+                    if (comments) {
                         form.append("comments", comments);
                         console.log("Comments are set to: " + comments);
                     }
-                    if(release_id) {
+                    if (release_id) {
                         form.append("release_Id", release_id);
                         console.log("Release ID is set to: " + release_id);
                     }
-                    if(platform_variant) {
+                    if (platform_variant) {
                         form.append("platform_variant", platform_variant);
                         console.log("Platform variant is set to: " + platform_variant);
                     }
-                    if(external_id) {
+                    if (external_id) {
                         form.append("external_id", external_id);
                         console.log("External ID is set to: " + external_id);
                     }
-                    // Send the scan request with file and optional fields
-                    console.log(`Starting upload of ${file_path}`);
-                    const response = yield fetch(auth_json.upload_url, {
-                        method: "POST",
-                        body: form,
-                    });
-                    console.log(`Finished upload of ${file_path}`);
-                    let jsonformat;
-                    try {
-                        jsonformat = yield response.json();
-                    }
-                    catch (err) {
-                        core.setFailed(err);
-                    }
+                    // Send the scan request with file
+                    console.log("Starting upload...");
+                    return [4 /*yield*/, fetch(auth_json.upload_url, {
+                            method: "POST",
+                            body: form
+                        })];
+                case 8:
+                    response = _a.sent();
+                    console.log("Finished upload.");
+                    jsonformat = void 0;
+                    _a.label = 9;
+                case 9:
+                    _a.trys.push([9, 11, , 12]);
+                    return [4 /*yield*/, response.json()];
+                case 10:
+                    jsonformat = _a.sent();
+                    return [3 /*break*/, 12];
+                case 11:
+                    err_2 = _a.sent();
+                    core.setFailed(err_2);
+                    return [3 /*break*/, 12];
+                case 12:
                     output.push(jsonformat);
                     // Check the response
                     if (response.status === 200) {
                         console.log(jsonformat);
-                        break;
+                        return [3 /*break*/, 14];
                     }
-                    else if (loop_idx == 2) {
+                    else if (loop_idx == (maxUploadFiles - 1)) {
                         core.setFailed(jsonformat);
                     }
-                }
+                    _a.label = 13;
+                case 13:
+                    loop_idx++;
+                    return [3 /*break*/, 2];
+                case 14:
+                    _i++;
+                    return [3 /*break*/, 1];
+                case 15:
+                    core.setOutput("responses", output);
+                    core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
+                    return [3 /*break*/, 17];
+                case 16:
+                    err_3 = _a.sent();
+                    core.setFailed(err_3.message);
+                    return [3 /*break*/, 17];
+                case 17: return [2 /*return*/];
             }
-            core.setOutput("responses", output);
-            core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
-        }
-        catch (err) {
-            core.setFailed(err.message);
-        }
+        });
     });
 }
 run();
