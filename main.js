@@ -170,6 +170,7 @@ function run() {
                     return [3 /*break*/, 12];
                 case 12:
                     output.push(jsonformat);
+                    console.log("Response: " + response.status + " - " + jsonformat);
                     // Check the response
                     if (response.status === 200) {
                         console.log(jsonformat);
