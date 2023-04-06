@@ -6,6 +6,7 @@ import fs = require("fs");
 
 // Global constants
 const maxUploadFiles: number = 3; // no more than 3 files can be uploaded at a time
+const maxRetries: number = 3; // max number of uploads to retry
 
 async function run() {
   try {
@@ -52,14 +53,17 @@ async function run() {
     console.log("Found " + files.length + " files to upload.");
 
     // Upload all the files that matched the file path
+    let file_idx: number = 1;
     let output: Array<any> = []
     for (const file_path of files) {
       if (!fs.existsSync(file_path)) {
-        throw new Error("Could not find file:" + file_path);
+        throw new Error("Could not access file:" + file_path);
       }
-      // retry upload 3 times
-      for (let loop_idx = 0; loop_idx < maxUploadFiles; loop_idx++) {
-        console.log("Processing file " + file_path + " (" + loop_idx+1 + " of " + maxUploadFiles + ").");
+
+      console.log("Processing file " + file_path + " (" + file_idx + " of " + files.length + ").");
+
+      // retry upload maxRetries times
+      for (let loop_idx = 0; loop_idx < maxRetries; loop_idx++) {
 
         // Send the auth request to get the upload URL
         const auth_response = await fetch(
@@ -135,7 +139,7 @@ async function run() {
         if (response.status === 200) {
           console.log(jsonformat);
           break;
-        } else if (loop_idx == (maxUploadFiles - 1)) {
+        } else if (loop_idx == (maxRetries - 1)) {
           core.setFailed(jsonformat);
         }
       }

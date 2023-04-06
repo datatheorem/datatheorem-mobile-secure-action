@@ -43,9 +43,10 @@ var FormData = require("form-data");
 var fs = require("fs");
 // Global constants
 var maxUploadFiles = 3; // no more than 3 files can be uploaded at a time
+var maxRetries = 3; // max number of uploads to retry
 function run() {
     return __awaiter(this, void 0, void 0, function () {
-        var dt_upload_api_key, input_binary_path, username, password, comments, release_id, platform_variant, external_id, files, output, _i, files_1, file_path, loop_idx, auth_response, auth_json, err_1, form, response, jsonformat, err_2, err_3;
+        var dt_upload_api_key, input_binary_path, username, password, comments, release_id, platform_variant, external_id, files, file_idx, output, _i, files_1, file_path, loop_idx, auth_response, auth_json, err_1, form, response, jsonformat, err_2, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -76,6 +77,7 @@ function run() {
                         throw new Error("Too many files (" + files.length + ") match the provided glob pattern; please write a more restrictive pattern to match no more than " + maxUploadFiles + " files.");
                     }
                     console.log("Found " + files.length + " files to upload.");
+                    file_idx = 1;
                     output = [];
                     _i = 0, files_1 = files;
                     _a.label = 1;
@@ -83,13 +85,13 @@ function run() {
                     if (!(_i < files_1.length)) return [3 /*break*/, 15];
                     file_path = files_1[_i];
                     if (!fs.existsSync(file_path)) {
-                        throw new Error("Could not find file:" + file_path);
+                        throw new Error("Could not access file:" + file_path);
                     }
+                    console.log("Processing file " + file_path + " (" + file_idx + " of " + files.length + ").");
                     loop_idx = 0;
                     _a.label = 2;
                 case 2:
-                    if (!(loop_idx < maxUploadFiles)) return [3 /*break*/, 14];
-                    console.log("Processing file " + file_path + " (" + loop_idx + 1 + " of " + maxUploadFiles + ").");
+                    if (!(loop_idx < maxRetries)) return [3 /*break*/, 14];
                     return [4 /*yield*/, fetch("https://api.securetheorem.com/uploadapi/v1/upload_init", {
                             method: "POST",
                             headers: {
@@ -173,7 +175,7 @@ function run() {
                         console.log(jsonformat);
                         return [3 /*break*/, 14];
                     }
-                    else if (loop_idx == (maxUploadFiles - 1)) {
+                    else if (loop_idx == (maxRetries - 1)) {
                         core.setFailed(jsonformat);
                     }
                     _a.label = 13;
