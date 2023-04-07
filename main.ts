@@ -71,7 +71,7 @@ async function run() {
       }
       if(password) {
           form.append("password", password);
-          console.log("DAST password is set");
+          console.log("DAST password is set to: (hidden)");
       }
       if(comments) {
           form.append("comments", comments);
@@ -90,34 +90,34 @@ async function run() {
           console.log("External ID is set to: " + external_id);
       }
 
-      // Send the auth request to get the upload URL
-      const auth_response = await fetch(
-        "https://api.securetheorem.com/uploadapi/v1/upload_init",
-        {
-          method: "POST",
-          headers: {
-            Authorization: "APIKey " + dt_upload_api_key,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      let auth_json;
-      try {
-        auth_json = await auth_response.json();
-      } catch (err) {
-        core.setFailed(err);
-      }
-
-      if (auth_response.status !== 200) {
-        // handles auth failure
-        core.setFailed(auth_json);
-        break;
-      }
-
       // retry upload maxRetries times
       for (let loop_idx = 0; loop_idx < maxRetries; loop_idx++) {
+
+        // Send the auth request to get the upload URL
+        const auth_response = await fetch(
+          "https://api.securetheorem.com/uploadapi/v1/upload_init",
+          {
+            method: "POST",
+            headers: {
+              Authorization: "APIKey " + dt_upload_api_key,
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        let auth_json;
+        try {
+          auth_json = await auth_response.json();
+        } catch (err) {
+          core.setFailed(err);
+        }
+
+        if (auth_response.status !== 200) {
+          // handles auth failure
+          core.setFailed(auth_json);
+          break;
+        } 
 
         // Send the scan request with file
         console.log("Starting upload...");
@@ -134,10 +134,15 @@ async function run() {
           core.setFailed(err);
         }
         output.push(jsonformat)
-        console.log("Response: " + response.status + " - " + jsonformat);
+        console.log("Response: HHTP/" + response.status);
+        console.log(jsonformat);
+
         // Check the response
+        // If we receive 409 (ownership conflict) or if this is the last try, bail out 
         if (response.status === 200) {
-          console.log(jsonformat);
+          break;
+        } else if (response.status === 409) {
+          core.setFailed(jsonformat);
           break;
         } else if (loop_idx == (maxRetries - 1)) {
           core.setFailed(jsonformat);
