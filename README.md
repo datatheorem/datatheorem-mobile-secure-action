@@ -21,8 +21,16 @@ You can use a glob pattern to indicate variable parts of the build's file name (
 Examples of glob patterns:
 - `app-*.apk` : search for any apk starting with `app-` in workspace root directory
 - `**/app-*.ipa` : search for any ipa starting with `app-` in any subdirectory of the workspace
-- `{,**/}app-debug*.*` : search for any file containing `app-debug` in root the directory or in any subdirectory of the workspace
-If multiple files match the provided pattern all matching files will be uploaded.
+- `{,**/}app-debug*.*` : search for any file containing `app-debug` in root the directory or in any subdirectory of the workspace.
+
+If multiple files match the provided pattern, all matching files will be uploaded. However, to prevent accidentally uploading content of a large directory there is a limit of 3 matching files.  If more than 3 files match the pattern, the upload will fail with a corresponding error message.
+
+## Set optional parameters
+You can optionally provide username and password to be used with dynamic (DAST) testing.  Optional parameters (including username and password) are described in more details in the [API documentation](https://datatheorem.github.io/PortalApi/mobile_security_devops/uploading_mobile_apps.html).  We strongly recommend using [Github Encrypted secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) to protect the dynamic testing credentials.
+
+At this time, comments, release id, external id, and platform variant parameters are supported, in addition to username/password.  When optional parameters are specified, they override previosly provided values.  If optional parameters are omitted, previously provided value are used for username/password, and other parameters are set to blank/unused.  For example, a build for which comments are not provided will show no comments.
+
+If multiple files match the provided pattern, the same set of optional values will be sent with each file. 
 
 ## Sample usage
 
@@ -50,4 +58,10 @@ jobs:
         with:
           UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
+          USERNAME: "test_user"
+          PASSWORD: ${{ secrets.DT_DAST_PASSWORD }}
+          COMMENTS: "This is a pre-production build."
+          RELEASE_ID: ${{ vars.GITHUB_RUN_NUMBER }}
+          EXTERNAL_ID: "App_12230045"
+
 ```
