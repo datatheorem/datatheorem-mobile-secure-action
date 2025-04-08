@@ -108,7 +108,13 @@ function run() {
                     form = new FormData();
                     form.append("file", fs.createReadStream(file_path));
                     if (sourcemap_file_path) {
-                        form.append("sourcemap", fs.createReadStream(sourcemap_file_path));
+                        try {
+                            form.append("sourcemap", fs.createReadStream(sourcemap_file_path));
+                        }
+                        catch (err) {
+                            core.setFailed(err);
+                            return [2 /*return*/];
+                        }
                     }
                     // only append optional fields if explicitly set
                     if (username) {
