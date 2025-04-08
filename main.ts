@@ -27,9 +27,9 @@ async function run() {
   // Mandatory
   const dt_upload_api_key = core.getInput("DT_UPLOAD_API_KEY");
   const input_binary_path = core.getInput("UPLOAD_BINARY_PATH");
-  const sourcemap_file_path = core.getInput("SOURCEMAP_FILE_PATH");
 
   // Optional
+  const sourcemap_file_path = core.getInput("SOURCEMAP_FILE_PATH");
   const username = core.getInput("USERNAME");
   const password = core.getInput("PASSWORD");
   const comments = core.getInput("COMMENTS");
@@ -75,7 +75,12 @@ async function run() {
     form.append("file", fs.createReadStream(file_path));
 
     if (sourcemap_file_path) {
+      try {
         form.append("sourcemap", fs.createReadStream(sourcemap_file_path));
+      } catch (err) {
+        core.setFailed(err);
+        return;
+      }
     }
 
     // only append optional fields if explicitly set
