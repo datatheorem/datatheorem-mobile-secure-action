@@ -162,7 +162,7 @@ async function run() {
     throw new Error("UPLOAD_BINARY_PATH must be set!");
   }
 
-  const files = glob.sync(input_binary_path);
+  const files: Array<string> = glob.sync(input_binary_path);
   if (!files.length) {
     throw new Error("Did not find any files that match path:" + input_binary_path);
   }
@@ -175,13 +175,10 @@ async function run() {
   console.log(`Found ${files.length} files to upload.`);
 
   // Upload all the files that matched the file path
-  let output: Array<any> = []
+  const output = files.map(
+    (file_path, file_idx) => {
+      console.log(`Processing file ${file_path} (${file_idx} of ${files.length}).`);
 
-  for (const [file_idx, file_path] of files.entries()) {
-    console.log(`Processing file ${file_path} (${file_idx} of ${files.length}).`);
-
-    // retry upload maxRetries times
-    for (let loop_idx = 0; loop_idx < maxRetries; loop_idx++) {
       // Send the scan request with file
       console.log("Starting upload...");
 
@@ -196,9 +193,9 @@ async function run() {
       );
       console.log("Finished upload.");
 
-      output.push(jsonData)
+      return jsonData;
     }
-  }
+  )
 
   core.setOutput("responses", output);
   core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
