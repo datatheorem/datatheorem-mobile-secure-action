@@ -108,6 +108,9 @@ function run() {
                     form = new FormData();
                     form.append("file", fs.createReadStream(file_path));
                     if (sourcemap_file_path) {
+                        if (!fs.existsSync(sourcemap_file_path)) {
+                            throw new Error("Could not access file:" + sourcemap_file_path);
+                        }
                         try {
                             form.append("sourcemap", fs.createReadStream(sourcemap_file_path));
                         }
