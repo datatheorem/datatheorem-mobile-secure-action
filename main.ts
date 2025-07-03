@@ -44,7 +44,7 @@ async function get_security_findings(
 ): Promise<Response> {
   let url = `https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings?mobile_app_id=${mobile_app_id}&scan_id=${scan_id}&status_group=OPEN`;
   if (severity) {
-    url += `&severity=${severity}`;
+    url += `&minimum_severity=${severity}`;
   }
   return await fetch(url, {
     headers: {

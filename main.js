@@ -44,7 +44,7 @@ function get_security_findings(dt_results_api_key, mobile_app_id, scan_id, sever
     return __awaiter(this, void 0, void 0, function* () {
         let url = `https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings?mobile_app_id=${mobile_app_id}&scan_id=${scan_id}&status_group=OPEN`;
         if (severity) {
-            url += `&severity=${severity}`;
+            url += `&minimum_severity=${severity}`;
         }
         return yield fetch(url, {
             headers: {
