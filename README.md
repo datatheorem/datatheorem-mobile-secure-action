@@ -32,6 +32,31 @@ At this time, comments, release id, external id, and platform variant parameters
 
 If multiple files match the provided pattern, the same set of optional values will be sent with each file. 
 
+## Vulnerability Blocking
+
+The action supports automatic build blocking based on security findings. When `BLOCK_ON_SEVERITY` is specified, the action will:
+
+1. Wait for the scan to complete (up to 5 minutes)
+2. Check for security findings at or above the specified severity level
+3. Block the build if any vulnerabilities are found at the minimum severity threshold
+
+### Severity Levels
+- `HIGH`: Block on high severity vulnerabilities only
+- `MEDIUM`: Block on medium and high severity vulnerabilities  
+- `LOW`: Block on all severity vulnerabilities (low, medium, high)
+
+### Example with Vulnerability Blocking
+```yaml
+- name: Upload to Data Theorem with blocking if high or medium vulnerabilities are found
+  uses: datatheorem/datatheorem-mobile-secure-action@v2.3.1
+  with:
+    UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
+    DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
+    BLOCK_ON_SEVERITY: "MEDIUM"
+```
+
+**Note:** The vulnerability blocking feature will cause the action to wait for scan completion before proceeding. This adds time to your build process but ensures security issues are caught before deployment.
+
 ## Sample usage
 
 ```yaml
@@ -63,5 +88,6 @@ jobs:
           COMMENTS: "This is a pre-production build."
           RELEASE_ID: ${{ vars.GITHUB_RUN_NUMBER }}
           EXTERNAL_ID: "App_12230045"
+          BLOCK_ON_SEVERITY: "HIGH"  # Optional: Block build on high severity vulnerabilities
 
 ```
