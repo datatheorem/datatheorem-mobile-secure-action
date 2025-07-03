@@ -6,6 +6,9 @@ inputs:
   DT_UPLOAD_API_KEY:
     description: 'Data Theorem upload API key'
     required: true
+  DT_RESULTS_API_KEY:
+    description: 'Data Theorem results API key (required when BLOCK_ON_SEVERITY is used)'
+    required: false
   UPLOAD_BINARY_PATH:
     description: >
       Path to the app to upload.

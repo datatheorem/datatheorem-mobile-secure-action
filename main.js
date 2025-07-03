@@ -29,18 +29,18 @@ function upload_step_init(dt_upload_api_key) {
         });
     });
 }
-function check_scan_status(dt_upload_api_key, mobile_app_id, scan_id) {
+function check_scan_status(dt_results_api_key, mobile_app_id, scan_id) {
     return __awaiter(this, void 0, void 0, function* () {
         return yield fetch(`https://api.securetheorem.com/apis/mobile_security/results/v2/mobile_apps/${mobile_app_id}/scans/${scan_id}`, {
             headers: {
                 Accept: "application/json",
-                Authorization: "APIKey " + dt_upload_api_key,
+                Authorization: "APIKey " + dt_results_api_key,
             },
             method: "GET",
         });
     });
 }
-function get_security_findings(dt_upload_api_key, mobile_app_id, scan_id, severity) {
+function get_security_findings(dt_results_api_key, mobile_app_id, scan_id, severity) {
     return __awaiter(this, void 0, void 0, function* () {
         let url = `https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings?mobile_app_id=${mobile_app_id}&scan_id=${scan_id}&status_group=OPEN`;
         if (severity) {
@@ -49,7 +49,7 @@ function get_security_findings(dt_upload_api_key, mobile_app_id, scan_id, severi
         return yield fetch(url, {
             headers: {
                 Accept: "application/json",
-                Authorization: "APIKey " + dt_upload_api_key,
+                Authorization: "APIKey " + dt_results_api_key,
             },
             method: "GET",
         });
@@ -61,6 +61,7 @@ function run() {
         // Mandatory
         const dt_upload_api_key = core.getInput("DT_UPLOAD_API_KEY");
         const input_binary_path = core.getInput("UPLOAD_BINARY_PATH");
+        const dt_results_api_key = core.getInput("DT_RESULTS_API_KEY");
         // Optional
         const sourcemap_file_path = core.getInput("SOURCEMAP_FILE_PATH");
         const username = core.getInput("USERNAME");
@@ -77,6 +78,7 @@ function run() {
         }
         // Mask the sensitive fields
         core.setSecret(dt_upload_api_key);
+        core.setSecret(dt_results_api_key);
         core.setSecret(password);
         // Check that the inputs are set
         if (!dt_upload_api_key) {
@@ -84,6 +86,9 @@ function run() {
         }
         if (!input_binary_path) {
             throw new Error("UPLOAD_BINARY_PATH must be set!");
+        }
+        if (block_on_severity && !dt_results_api_key) {
+            throw new Error("DT_RESULTS_API_KEY must be set when BLOCK_ON_SEVERITY is enabled!");
         }
         const files = glob.sync(input_binary_path);
         if (!files.length) {
@@ -215,7 +220,7 @@ function run() {
             console.log(`Waiting for scan ${scan_id} to complete...`);
             while (Date.now() - startTime < maxWaitTime) {
                 try {
-                    const status_response = yield check_scan_status(dt_upload_api_key, mobile_app_id, scan_id);
+                    const status_response = yield check_scan_status(dt_results_api_key, mobile_app_id, scan_id);
                     if (status_response.status !== 200) {
                         console.log(`Error checking scan status for ${scan_id}: HTTP ${status_response.status}`);
                         continue;
@@ -233,7 +238,7 @@ function run() {
                     }
                     console.log(`Scan ${scan_id} completed, checking for security findings...`);
                     // Get security findings count with severity filter
-                    const findings_response = yield get_security_findings(dt_upload_api_key, mobile_app_id, scan_id, block_on_severity);
+                    const findings_response = yield get_security_findings(dt_results_api_key, mobile_app_id, scan_id, block_on_severity);
                     if (findings_response.status !== 200) {
                         console.log(`Error fetching security findings for scan ${scan_id}: HTTP ${findings_response.status}`);
                         break;

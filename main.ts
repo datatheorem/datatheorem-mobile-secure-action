@@ -20,7 +20,7 @@ async function upload_step_init(dt_upload_api_key: string): Promise<Response> {
 }
 
 async function check_scan_status(
-  dt_upload_api_key: string,
+  dt_results_api_key: string,
   mobile_app_id: string,
   scan_id: string,
 ): Promise<Response> {
@@ -29,7 +29,7 @@ async function check_scan_status(
     {
       headers: {
         Accept: "application/json",
-        Authorization: "APIKey " + dt_upload_api_key,
+        Authorization: "APIKey " + dt_results_api_key,
       },
       method: "GET",
     },
@@ -37,7 +37,7 @@ async function check_scan_status(
 }
 
 async function get_security_findings(
-  dt_upload_api_key: string,
+  dt_results_api_key: string,
   mobile_app_id: string,
   scan_id: string,
   severity?: string,
@@ -49,7 +49,7 @@ async function get_security_findings(
   return await fetch(url, {
     headers: {
       Accept: "application/json",
-      Authorization: "APIKey " + dt_upload_api_key,
+      Authorization: "APIKey " + dt_results_api_key,
     },
     method: "GET",
   });
@@ -60,6 +60,7 @@ async function run() {
   // Mandatory
   const dt_upload_api_key = core.getInput("DT_UPLOAD_API_KEY");
   const input_binary_path = core.getInput("UPLOAD_BINARY_PATH");
+  const dt_results_api_key = core.getInput("DT_RESULTS_API_KEY");
 
   // Optional
   const sourcemap_file_path = core.getInput("SOURCEMAP_FILE_PATH");
@@ -81,6 +82,7 @@ async function run() {
 
   // Mask the sensitive fields
   core.setSecret(dt_upload_api_key);
+  core.setSecret(dt_results_api_key);
   core.setSecret(password);
 
   // Check that the inputs are set
@@ -89,6 +91,11 @@ async function run() {
   }
   if (!input_binary_path) {
     throw new Error("UPLOAD_BINARY_PATH must be set!");
+  }
+  if (block_on_severity && !dt_results_api_key) {
+    throw new Error(
+      "DT_RESULTS_API_KEY must be set when BLOCK_ON_SEVERITY is enabled!",
+    );
   }
 
   const files = glob.sync(input_binary_path);
@@ -248,7 +255,7 @@ async function run() {
     while (Date.now() - startTime < maxWaitTime) {
       try {
         const status_response = await check_scan_status(
-          dt_upload_api_key,
+          dt_results_api_key,
           mobile_app_id,
           scan_id,
         );
@@ -284,7 +291,7 @@ async function run() {
 
         // Get security findings count with severity filter
         const findings_response = await get_security_findings(
-          dt_upload_api_key,
+          dt_results_api_key,
           mobile_app_id,
           scan_id,
           block_on_severity,

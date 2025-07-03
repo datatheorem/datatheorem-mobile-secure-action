@@ -8,9 +8,12 @@ https://www.datatheorem.com/products/mobile-secure
 
 Enabling this integration requires a valid Data Theorem API key.
 
-## Set your Data Theorem upload API key as a secret:
-To find your Data Theorem API key, connect to https://www.securetheorem.com/mobile/sdlc/api_access using your Data Theorem account.'  
-Create an encrypted variable named `DT_UPLOAD_API_KEY` in your Github repository
+## Set your Data Theorem API keys as secrets:
+To find your Data Theorem API keys, go to https://www.securetheorem.com/devsecops/results_api_access using your Data Theorem account.
+
+Create encrypted variables in your Github repository:
+- `DT_UPLOAD_API_KEY` - Required for uploading binaries
+- `DT_RESULTS_API_KEY` - Required when using vulnerability blocking (BLOCK_ON_SEVERITY)
 
 For more information, see [Github Encrypted secrets](https://docs.github.com/en/actions/reference/encrypted-secrets)
 
@@ -40,6 +43,8 @@ The action supports automatic build blocking based on security findings. When `B
 2. Check for security findings at or above the specified severity level
 3. Block the build if any vulnerabilities are found at the minimum severity threshold
 
+**Important:** Vulnerability blocking requires a separate `DT_RESULTS_API_KEY` with results access permissions.
+
 ### Severity Levels
 - `HIGH`: Block on high severity vulnerabilities only
 - `MEDIUM`: Block on medium and high severity vulnerabilities  
@@ -52,6 +57,7 @@ The action supports automatic build blocking based on security findings. When `B
   with:
     UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
     DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
+    DT_RESULTS_API_KEY: ${{ secrets.DT_RESULTS_API_KEY }}
     BLOCK_ON_SEVERITY: "MEDIUM"
 ```
 
@@ -83,6 +89,7 @@ jobs:
         with:
           UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
+          DT_RESULTS_API_KEY: ${{ secrets.DT_RESULTS_API_KEY }}  # Required for vulnerability blocking
           USERNAME: "test_user"
           PASSWORD: ${{ secrets.DT_DAST_PASSWORD }}
           COMMENTS: "This is a pre-production build."
