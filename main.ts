@@ -71,13 +71,20 @@ async function run() {
   const platform_variant = core.getInput("PLATFORM_VARIANT");
   const external_id = core.getInput("EXTERNAL_ID");
   const block_on_severity = core.getInput("BLOCK_ON_SEVERITY");
+  const warn_on_severity = core.getInput("WARN_ON_SEVERITY");
 
-  // Validate severity level
+  // Validate severity levels
   if (
     block_on_severity &&
     !["HIGH", "MEDIUM", "LOW"].includes(block_on_severity.toUpperCase())
   ) {
     throw new Error("BLOCK_ON_SEVERITY must be one of: HIGH, MEDIUM, LOW");
+  }
+  if (
+    warn_on_severity &&
+    !["HIGH", "MEDIUM", "LOW"].includes(warn_on_severity.toUpperCase())
+  ) {
+    throw new Error("WARN_ON_SEVERITY must be one of: HIGH, MEDIUM, LOW");
   }
 
   // Mask the sensitive fields
@@ -95,6 +102,11 @@ async function run() {
   if (block_on_severity && !dt_results_api_key) {
     throw new Error(
       "DT_RESULTS_API_KEY must be set when BLOCK_ON_SEVERITY is enabled!",
+    );
+  }
+  if (warn_on_severity && !dt_results_api_key) {
+    throw new Error(
+      "DT_RESULTS_API_KEY must be set when WARN_ON_SEVERITY is enabled!",
     );
   }
 
@@ -231,16 +243,23 @@ async function run() {
     file_idx++;
   }
 
-  // Check for vulnerabilities if BLOCK_ON_SEVERITY is set
-  if (!block_on_severity || scan_info.length === 0) {
+  // Check for vulnerabilities if BLOCK_ON_SEVERITY or WARN_ON_SEVERITY is set
+  if ((!block_on_severity && !warn_on_severity) || scan_info.length === 0) {
     core.setOutput("responses", output);
     core.setOutput("response", output[0]); // keep the `response` output as the response of the first file upload to maintain compatibility
     return;
   }
 
-  console.log(
-    `Checking for vulnerabilities with minimum severity: ${block_on_severity}`,
-  );
+  if (block_on_severity) {
+    console.log(
+      `Checking for vulnerabilities with minimum severity: ${block_on_severity}`,
+    );
+  }
+  if (warn_on_severity) {
+    console.log(
+      `Warning on vulnerabilities with minimum severity: ${warn_on_severity}`,
+    );
+  }
 
   for (const scan of scan_info) {
     const { mobile_app_id, scan_id } = scan;
@@ -289,37 +308,72 @@ async function run() {
           `Scan ${scan_id} completed, checking for security findings...`,
         );
 
-        // Get security findings count with severity filter
-        const findings_response = await get_security_findings(
-          dt_results_api_key,
-          mobile_app_id,
-          scan_id,
-          block_on_severity,
-        );
-
-        if (findings_response.status !== 200) {
-          console.log(
-            `Error fetching security findings for scan ${scan_id}: HTTP ${findings_response.status}`,
+        // Check for blocking vulnerabilities first
+        if (block_on_severity) {
+          const findings_response = await get_security_findings(
+            dt_results_api_key,
+            mobile_app_id,
+            scan_id,
+            block_on_severity,
           );
-          break;
+
+          if (findings_response.status !== 200) {
+            console.log(
+              `Error fetching security findings for scan ${scan_id}: HTTP ${findings_response.status}`,
+            );
+            break;
+          }
+
+          const findings_data = await findings_response.json();
+          const total_count = findings_data.total_count || 0;
+
+          if (total_count > 0) {
+            console.log(
+              `Found ${total_count} security findings at or above ${block_on_severity} severity level`,
+            );
+            core.setFailed(
+              `Build blocked due to ${total_count} security findings at or above ${block_on_severity} severity level`,
+            );
+            return;
+          }
+
+          console.log(
+            `No security findings found at or above ${block_on_severity} severity level for scan ${scan_id}`,
+          );
         }
 
-        const findings_data = await findings_response.json();
-        const total_count = findings_data.total_count || 0;
+        // Check for warning vulnerabilities
+        if (warn_on_severity) {
+          const warn_findings_response = await get_security_findings(
+            dt_results_api_key,
+            mobile_app_id,
+            scan_id,
+            warn_on_severity,
+          );
 
-        if (total_count > 0) {
-          console.log(
-            `Found ${total_count} security findings at or above ${block_on_severity} severity level`,
-          );
-          core.setFailed(
-            `Build blocked due to ${total_count} security findings at or above ${block_on_severity} severity level`,
-          );
-          return;
+          if (warn_findings_response.status !== 200) {
+            console.log(
+              `Error fetching security findings for warnings for scan ${scan_id}: HTTP ${warn_findings_response.status}`,
+            );
+          } else {
+            const warn_findings_data = await warn_findings_response.json();
+            const warn_total_count = warn_findings_data.total_count || 0;
+
+            if (warn_total_count > 0) {
+              console.log(
+                `⚠️  WARNING: Found ${warn_total_count} security findings at or above ${warn_on_severity} severity level for scan ${scan_id}`,
+              );
+              console.log(
+                `⚠️  These findings do not block the build, but should be reviewed and addressed.`,
+              );
+            } else {
+              console.log(
+                `No security findings found at or above ${warn_on_severity} severity level for scan ${scan_id}`,
+              );
+            }
+          }
         }
 
-        console.log(
-          `No security findings found at or above ${block_on_severity} severity level for scan ${scan_id}`,
-        );
         break;
       } catch (error) {
         console.log(
