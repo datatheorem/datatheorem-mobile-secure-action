@@ -57,8 +57,15 @@ inputs:
       Block the build if vulnerabilities with the specified minimum severity are found.
       Valid values: HIGH, MEDIUM, LOW. If not specified, build will not be blocked.
     required: false
+  WARN_ON_SEVERITY:
+    description: >
+      Print warning messages if vulnerabilities with the specified minimum severity are found.
+      This is a softer version of BLOCK_ON_SEVERITY that doesn't fail the build.
+      Valid values: HIGH, MEDIUM, LOW. If not specified, no warnings will be shown.
+      This requires a Data Theorem Mobile Results API Key to be set.
+    required: false
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'main.js'
 branding:
   color: 'blue'
