@@ -39,13 +39,21 @@ async function check_scan_status(
 async function get_security_findings(
   dt_results_api_key: string,
   mobile_app_id: string,
-  scan_id: string,
+  result_since: string,
   severity?: string,
 ): Promise<Response> {
-  let url = `https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings?mobile_app_id=${mobile_app_id}&scan_id=${scan_id}&status_group=OPEN`;
+  const baseUrl = "https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings";
+  const params = new URLSearchParams({
+    mobile_app_id,
+    result_since,
+    status_group: "OPEN",
+  });
+  
   if (severity) {
-    url += `&minimum_severity=${severity}`;
+    params.append("severity", severity);
   }
+
+  const url = `${baseUrl}?${params.toString()}`;
   return await fetch(url, {
     headers: {
       Accept: "application/json",
@@ -53,6 +61,51 @@ async function get_security_findings(
     },
     method: "GET",
   });
+}
+
+async function check_severity_findings(
+  dt_results_api_key: string,
+  mobile_app_id: string,
+  result_since: string,
+  severity_level: string,
+): Promise<{ has_findings: boolean; total_count: number }> {
+  const severity_checks = {
+    HIGH: ["HIGH"],
+    MEDIUM: ["HIGH", "MEDIUM"],
+    LOW: ["HIGH", "MEDIUM", "LOW"],
+  };
+
+  const severities_to_check = severity_checks[severity_level.toUpperCase()];
+  if (!severities_to_check) {
+    throw new Error(`Invalid severity level: ${severity_level}`);
+  }
+
+  let total_findings = 0;
+
+  for (const severity of severities_to_check) {
+    const findings_response = await get_security_findings(
+      dt_results_api_key,
+      mobile_app_id,
+      result_since,
+      severity,
+    );
+
+    if (findings_response.status !== 200) {
+      throw new Error(
+        `Error fetching security findings for ${severity} severity: HTTP ${findings_response.status}`,
+      );
+    }
+
+    const findings_data = await findings_response.json();
+    const count = findings_data.total_count || 0;
+    total_findings += count;
+
+    if (count > 0) {
+      return { has_findings: true, total_count: total_findings };
+    }
+  }
+
+  return { has_findings: false, total_count: 0 };
 }
 
 async function run() {
@@ -308,60 +361,57 @@ async function run() {
           `Scan ${scan_id} completed, checking for security findings...`,
         );
 
+        // Use start_date from status_data as result_since
+        const result_since = status_data.start_date;
+        if (!result_since) {
+          console.log(`No start_date found in scan data for ${scan_id}`);
+          break;
+        }
+
         // Check for blocking vulnerabilities first
         if (block_on_severity) {
-          const findings_response = await get_security_findings(
-            dt_results_api_key,
-            mobile_app_id,
-            scan_id,
-            block_on_severity,
-          );
+          try {
+            const { has_findings, total_count } = await check_severity_findings(
+              dt_results_api_key,
+              mobile_app_id,
+              result_since,
+              block_on_severity,
+            );
 
-          if (findings_response.status !== 200) {
+            if (has_findings) {
+              console.log(
+                `Found ${total_count} security findings at or above ${block_on_severity} severity level`,
+              );
+              core.setFailed(
+                `Build blocked due to ${total_count} security findings at or above ${block_on_severity} severity level`,
+              );
+              return;
+            }
+
             console.log(
-              `Error fetching security findings for scan ${scan_id}: HTTP ${findings_response.status}`,
+              `No security findings found at or above ${block_on_severity} severity level for scan ${scan_id}`,
+            );
+          } catch (error) {
+            console.log(
+              `Error checking security findings for scan ${scan_id}: ${error.message}`,
             );
             break;
           }
-
-          const findings_data = await findings_response.json();
-          const total_count = findings_data.total_count || 0;
-
-          if (total_count > 0) {
-            console.log(
-              `Found ${total_count} security findings at or above ${block_on_severity} severity level`,
-            );
-            core.setFailed(
-              `Build blocked due to ${total_count} security findings at or above ${block_on_severity} severity level`,
-            );
-            return;
-          }
-
-          console.log(
-            `No security findings found at or above ${block_on_severity} severity level for scan ${scan_id}`,
-          );
         }
 
         // Check for warning vulnerabilities
         if (warn_on_severity) {
-          const warn_findings_response = await get_security_findings(
-            dt_results_api_key,
-            mobile_app_id,
-            scan_id,
-            warn_on_severity,
-          );
-
-          if (warn_findings_response.status !== 200) {
-            console.log(
-              `Error fetching security findings for warnings for scan ${scan_id}: HTTP ${warn_findings_response.status}`,
+          try {
+            const { has_findings, total_count } = await check_severity_findings(
+              dt_results_api_key,
+              mobile_app_id,
+              result_since,
+              warn_on_severity,
             );
-          } else {
-            const warn_findings_data = await warn_findings_response.json();
-            const warn_total_count = warn_findings_data.total_count || 0;
 
-            if (warn_total_count > 0) {
+            if (has_findings) {
               console.log(
-                `⚠️  WARNING: Found ${warn_total_count} security findings at or above ${warn_on_severity} severity level for scan ${scan_id}`,
+                `⚠️  WARNING: Found ${total_count} security findings at or above ${warn_on_severity} severity level for scan ${scan_id}`,
               );
               console.log(
                 `⚠️  These findings do not block the build, but should be reviewed and addressed.`,
@@ -371,6 +421,10 @@ async function run() {
                 `No security findings found at or above ${warn_on_severity} severity level for scan ${scan_id}`,
               );
             }
+          } catch (error) {
+            console.log(
+              `Error checking security findings for warnings for scan ${scan_id}: ${error.message}`,
+            );
           }
         }
 
