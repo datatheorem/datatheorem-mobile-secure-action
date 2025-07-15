@@ -261,14 +261,19 @@ function run() {
             const { mobile_app_id, scan_id } = scan;
             // Poll for scan completion with 30-second intervals
             const maxWaitTime = 300000; // 5 minutes
-            const pollInterval = 30000; // 30 seconds
+            const pollInterval = 23000; // 23 seconds
             const startTime = Date.now();
             console.log(`Waiting for scan ${scan_id} to complete...`);
             while (Date.now() - startTime < maxWaitTime) {
                 try {
                     const status_response = yield check_scan_status(dt_results_api_key, mobile_app_id, scan_id);
+                    if (status_response.status === 401 || status_response.status === 403) {
+                        console.log(`Authentication error checking scan status for ${scan_id}: HTTP ${status_response.status}. Please check your DT_RESULTS_API_KEY credentials.`);
+                        process.exit(1);
+                    }
                     if (status_response.status !== 200) {
                         console.log(`Error checking scan status for ${scan_id}: HTTP ${status_response.status}`);
+                        yield new Promise((resolve) => setTimeout(resolve, pollInterval));
                         continue;
                     }
                     const status_data = yield status_response.json();
@@ -280,6 +285,7 @@ function run() {
                     if (!status_data.static_scan ||
                         status_data.static_scan.status !== "COMPLETED") {
                         console.log(`Scan ${scan_id} still in progress, waiting...`);
+                        yield new Promise((resolve) => setTimeout(resolve, pollInterval));
                         continue;
                     }
                     console.log(`Scan ${scan_id} completed, checking for security findings...`);
@@ -325,8 +331,8 @@ function run() {
                 }
                 catch (error) {
                     console.log(`Error checking scan status for ${scan_id}: ${error.message}`);
+                    yield new Promise((resolve) => setTimeout(resolve, pollInterval));
                 }
-                yield new Promise((resolve) => setTimeout(resolve, pollInterval));
             }
             if (Date.now() - startTime >= maxWaitTime) {
                 console.log(`Timeout waiting for scan results for scan ${scan_id}`);

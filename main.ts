@@ -319,7 +319,7 @@ async function run() {
 
     // Poll for scan completion with 30-second intervals
     const maxWaitTime = 300000; // 5 minutes
-    const pollInterval = 30000; // 30 seconds
+    const pollInterval = 23000; // 23 seconds
     const startTime = Date.now();
 
     console.log(`Waiting for scan ${scan_id} to complete...`);
@@ -332,10 +332,18 @@ async function run() {
           scan_id,
         );
 
+        if (status_response.status === 401 || status_response.status === 403) {
+          console.log(
+            `Authentication error checking scan status for ${scan_id}: HTTP ${status_response.status}. Please check your DT_RESULTS_API_KEY credentials.`,
+          );
+          process.exit(1);
+        }
+
         if (status_response.status !== 200) {
           console.log(
             `Error checking scan status for ${scan_id}: HTTP ${status_response.status}`,
           );
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
           continue;
         }
 
@@ -354,6 +362,7 @@ async function run() {
           status_data.static_scan.status !== "COMPLETED"
         ) {
           console.log(`Scan ${scan_id} still in progress, waiting...`);
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
           continue;
         }
 
@@ -433,9 +442,8 @@ async function run() {
         console.log(
           `Error checking scan status for ${scan_id}: ${error.message}`,
         );
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
       }
-
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
 
     if (Date.now() - startTime >= maxWaitTime) {
