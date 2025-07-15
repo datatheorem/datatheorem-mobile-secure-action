@@ -39,13 +39,13 @@ async function check_scan_status(
 async function get_security_findings(
   dt_results_api_key: string,
   mobile_app_id: string,
-  result_since: string,
+  results_since: string,
   severity?: string,
 ): Promise<Response> {
   const baseUrl = "https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings";
   const params = new URLSearchParams({
     mobile_app_id,
-    result_since,
+    results_since,
     status_group: "OPEN",
   });
   
@@ -66,7 +66,7 @@ async function get_security_findings(
 async function check_severity_findings(
   dt_results_api_key: string,
   mobile_app_id: string,
-  result_since: string,
+  results_since: string,
   severity_level: string,
 ): Promise<{ has_findings: boolean; total_count: number }> {
   const severity_checks = {
@@ -86,7 +86,7 @@ async function check_severity_findings(
     const findings_response = await get_security_findings(
       dt_results_api_key,
       mobile_app_id,
-      result_since,
+      results_since,
       severity,
     );
 
@@ -370,9 +370,9 @@ async function run() {
           `Scan ${scan_id} completed, checking for security findings...`,
         );
 
-        // Use start_date from status_data as result_since
-        const result_since = status_data.start_date;
-        if (!result_since) {
+        // Use start_date from status_data as results_since
+        const results_since = status_data.start_date;
+        if (!results_since) {
           console.log(`No start_date found in scan data for ${scan_id}`);
           break;
         }
@@ -383,7 +383,7 @@ async function run() {
             const { has_findings, total_count } = await check_severity_findings(
               dt_results_api_key,
               mobile_app_id,
-              result_since,
+              results_since,
               block_on_severity,
             );
 
@@ -414,7 +414,7 @@ async function run() {
             const { has_findings, total_count } = await check_severity_findings(
               dt_results_api_key,
               mobile_app_id,
-              result_since,
+              results_since,
               warn_on_severity,
             );
 

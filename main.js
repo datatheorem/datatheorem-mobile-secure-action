@@ -40,12 +40,12 @@ function check_scan_status(dt_results_api_key, mobile_app_id, scan_id) {
         });
     });
 }
-function get_security_findings(dt_results_api_key, mobile_app_id, result_since, severity) {
+function get_security_findings(dt_results_api_key, mobile_app_id, results_since, severity) {
     return __awaiter(this, void 0, void 0, function* () {
         const baseUrl = "https://api.securetheorem.com/apis/mobile_security/results/v2/security_findings";
         const params = new URLSearchParams({
             mobile_app_id,
-            result_since,
+            results_since,
             status_group: "OPEN",
         });
         if (severity) {
@@ -61,7 +61,7 @@ function get_security_findings(dt_results_api_key, mobile_app_id, result_since, 
         });
     });
 }
-function check_severity_findings(dt_results_api_key, mobile_app_id, result_since, severity_level) {
+function check_severity_findings(dt_results_api_key, mobile_app_id, results_since, severity_level) {
     return __awaiter(this, void 0, void 0, function* () {
         const severity_checks = {
             HIGH: ["HIGH"],
@@ -74,7 +74,7 @@ function check_severity_findings(dt_results_api_key, mobile_app_id, result_since
         }
         let total_findings = 0;
         for (const severity of severities_to_check) {
-            const findings_response = yield get_security_findings(dt_results_api_key, mobile_app_id, result_since, severity);
+            const findings_response = yield get_security_findings(dt_results_api_key, mobile_app_id, results_since, severity);
             if (findings_response.status !== 200) {
                 throw new Error(`Error fetching security findings for ${severity} severity: HTTP ${findings_response.status}`);
             }
@@ -289,16 +289,16 @@ function run() {
                         continue;
                     }
                     console.log(`Scan ${scan_id} completed, checking for security findings...`);
-                    // Use start_date from status_data as result_since
-                    const result_since = status_data.start_date;
-                    if (!result_since) {
+                    // Use start_date from status_data as results_since
+                    const results_since = status_data.start_date;
+                    if (!results_since) {
                         console.log(`No start_date found in scan data for ${scan_id}`);
                         break;
                     }
                     // Check for blocking vulnerabilities first
                     if (block_on_severity) {
                         try {
-                            const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, result_since, block_on_severity);
+                            const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, results_since, block_on_severity);
                             if (has_findings) {
                                 console.log(`Found ${total_count} security findings at or above ${block_on_severity} severity level`);
                                 core.setFailed(`Build blocked due to ${total_count} security findings at or above ${block_on_severity} severity level`);
@@ -314,7 +314,7 @@ function run() {
                     // Check for warning vulnerabilities
                     if (warn_on_severity) {
                         try {
-                            const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, result_since, warn_on_severity);
+                            const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, results_since, warn_on_severity);
                             if (has_findings) {
                                 console.log(`⚠️  WARNING: Found ${total_count} security findings at or above ${warn_on_severity} severity level for scan ${scan_id}`);
                                 console.log(`⚠️  These findings do not block the build, but should be reviewed and addressed.`);
