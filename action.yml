@@ -6,6 +6,9 @@ inputs:
   DT_UPLOAD_API_KEY:
     description: 'Data Theorem upload API key'
     required: true
+  DT_RESULTS_API_KEY:
+    description: 'Data Theorem results API key (required when BLOCK_ON_SEVERITY is used)'
+    required: false
   UPLOAD_BINARY_PATH:
     description: >
       Path to the app to upload.
@@ -49,8 +52,20 @@ inputs:
     description: >
       The external_id field represents your organization’s custom identifier for the app, if any.
     required: false
+  BLOCK_ON_SEVERITY:
+    description: >
+      Block the build if vulnerabilities with the specified minimum severity are found.
+      Valid values: HIGH, MEDIUM, LOW. If not specified, build will not be blocked.
+    required: false
+  WARN_ON_SEVERITY:
+    description: >
+      Print warning messages if vulnerabilities with the specified minimum severity are found.
+      This is a softer version of BLOCK_ON_SEVERITY that doesn't fail the build.
+      Valid values: HIGH, MEDIUM, LOW. If not specified, no warnings will be shown.
+      This requires a Data Theorem Mobile Results API Key to be set.
+    required: false
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'main.js'
 branding:
   color: 'blue'
