@@ -291,7 +291,7 @@ function run() {
                         continue;
                     }
                     const status_data = yield status_response.json();
-                    const scan_status = status_data.status || status_data.static_scan.status;
+                    const scan_status = status_data.static_scan.status || status_data.status;
                     if (scan_status &&
                         ["FAILED", "SCAN_ATTEMPT_ERROR", "CANCELLED"].includes(scan_status)) {
                         console.log(`Scan ${scan_id} failed, skipping vulnerability check`);
