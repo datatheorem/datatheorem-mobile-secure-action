@@ -135,6 +135,6 @@ jobs:
           EXTERNAL_ID: "App_12230045"
           BLOCK_ON_SEVERITY: "HIGH"  # Optional: Block build on high severity vulnerabilities
           WARN_ON_SEVERITY: "MEDIUM"  # Optional: Warn on medium severity vulnerabilities
-          POLLING_TIMEOUT: 300000  # Optional: Stop polling the scan result after the specified time 
+          POLLING_TIMEOUT: 300000  # Optional: Stop polling the scan result after the specified time
 
 ```
