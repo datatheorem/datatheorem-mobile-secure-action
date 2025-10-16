@@ -267,6 +267,7 @@ function run() {
                 if (isNaN(maxWaitTime)) {
                     maxWaitTime = 300000;
                 }
+                console.log("Custom polling timeout set: " + polling_timeout);
             }
             // Poll for scan completion with 23-second intervals
             const pollInterval = 23000; // 23 seconds
