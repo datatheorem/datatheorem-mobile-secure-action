@@ -126,7 +126,14 @@ async function run() {
   const block_on_severity = core.getInput("BLOCK_ON_SEVERITY");
   const warn_on_severity = core.getInput("WARN_ON_SEVERITY");
   const polling_timeout = core.getInput("POLLING_TIMEOUT");
-
+  if (polling_timeout) {
+    maxWaitTime = parseInt(polling_timeout, 10);
+    // Fallback to default value if the value is incorrect
+    if (isNaN(maxWaitTime)) {
+        maxWaitTime = 300000;
+    }
+    console.log("Custom polling timeout set: " + polling_timeout);
+  }
   // Validate severity levels
   if (
     block_on_severity &&
