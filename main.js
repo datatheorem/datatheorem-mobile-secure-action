@@ -105,6 +105,7 @@ function run() {
         const external_id = core.getInput("EXTERNAL_ID");
         const block_on_severity = core.getInput("BLOCK_ON_SEVERITY");
         const warn_on_severity = core.getInput("WARN_ON_SEVERITY");
+        const polling_timeout = core.getInput("POLLING_TIMEOUT");
         // Validate severity levels
         if (block_on_severity &&
             !["HIGH", "MEDIUM", "LOW"].includes(block_on_severity.toUpperCase())) {
@@ -259,8 +260,15 @@ function run() {
         }
         for (const scan of scan_info) {
             const { mobile_app_id, scan_id } = scan;
-            // Poll for scan completion with 30-second intervals
-            const maxWaitTime = 300000; // 5 minutes
+            var maxWaitTime = 300000; // 5 minutes
+            if (polling_timeout) {
+                maxWaitTime = parseInt(polling_timeout, 10);
+                // Fallback to default value if the value is incorrect
+                if (isNaN(maxWaitTime)) {
+                    maxWaitTime = 300000;
+                }
+            }
+            // Poll for scan completion with 23-second intervals
             const pollInterval = 23000; // 23 seconds
             const startTime = Date.now();
             console.log(`Waiting for scan ${scan_id} to complete...`);
