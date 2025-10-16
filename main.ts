@@ -126,6 +126,17 @@ async function run() {
   const block_on_severity = core.getInput("BLOCK_ON_SEVERITY");
   const warn_on_severity = core.getInput("WARN_ON_SEVERITY");
   const polling_timeout = core.getInput("POLLING_TIMEOUT");
+  var parsed_polling_timeout;
+  if (polling_timeout) {
+        parsed_polling_timeout = parseInt(polling_timeout, 10);
+        if (isNaN(parsed_polling_timeout)) {
+            throw new Error("POLLING_TIMEOUT must be a number");
+        }
+        if (parsed_polling_timeout < 0) {
+            throw new Error("POLLING_TIMEOUT must be greater or equal to 0");
+        }
+    }
+
   // Validate severity levels
   if (
     block_on_severity &&
@@ -318,12 +329,8 @@ async function run() {
     const { mobile_app_id, scan_id } = scan;
 
     var maxWaitTime = 300000; // 5 minutes
-    if (polling_timeout) {
-        maxWaitTime = parseInt(polling_timeout, 10);
-        // Fallback to default value if the value is incorrect
-        if (isNaN(maxWaitTime)) {
-            maxWaitTime = 300000;
-        }
+    if (parsed_polling_timeout) {
+        maxWaitTime = parsed_polling_timeout * 1000;
     }
 
     // Poll for scan completion with 23-second intervals
@@ -356,10 +363,10 @@ async function run() {
         }
 
         const status_data = await status_response.json();
-
+        const scan_status = status_data.status || status_data.static_scan.status;
         if (
-          status_data.static_scan &&
-          status_data.static_scan.status === "FAILED"
+          scan_status &&
+          ["FAILED", "SCAN_ATTEMPT_ERROR", "CANCELLED"].includes(scan_status)
         ) {
           console.log(`Scan ${scan_id} failed, skipping vulnerability check`);
           break;

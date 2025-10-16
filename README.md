@@ -61,8 +61,8 @@ When `WARN_ON_SEVERITY` is specified, the action will:
 - `LOW`: Block on all severity vulnerabilities (low, medium, high)
 
 ### `POLLING_TIMEOUT`
-When `POLLING_TIMEOUT` is specified, the action will stop polling the scan result after the specified time (milliseconds).
-Defaults to 300 000ms (5 minutes).
+When `POLLING_TIMEOUT` is specified, the action will stop polling the scan result after the specified time in seconds.
+Defaults to 300 seconds (5 minutes).
 
 
 ### Example with Vulnerability Blocking
@@ -135,6 +135,6 @@ jobs:
           EXTERNAL_ID: "App_12230045"
           BLOCK_ON_SEVERITY: "HIGH"  # Optional: Block build on high severity vulnerabilities
           WARN_ON_SEVERITY: "MEDIUM"  # Optional: Warn on medium severity vulnerabilities
-          POLLING_TIMEOUT: 300000  # Optional: Stop polling the scan result after the specified time 
+          POLLING_TIMEOUT: 300  # Optional: Stop polling the scan result after the specified time 
 
 ```
