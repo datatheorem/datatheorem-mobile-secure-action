@@ -66,7 +66,7 @@ inputs:
     required: false
   POLLING_TIMEOUT:
     description: >
-      Stop polling the scan result after the specified time in milliseconds, default is 5 minutes.
+      Stop polling the scan result after the specified time in seconds, default is 5 minutes.
     required: false
 runs:
   using: 'node20'

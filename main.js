@@ -112,8 +112,8 @@ function run() {
             if (isNaN(parsed_polling_timeout)) {
                 throw new Error("POLLING_TIMEOUT must be a number");
             }
-            if (parsed_polling_timeout < 0) {
-                throw new Error("POLLING_TIMEOUT must be greater or equal to 0");
+            if (parsed_polling_timeout <= 0) {
+                throw new Error("POLLING_TIMEOUT must be greater than 0");
             }
         }
         // Validate severity levels
