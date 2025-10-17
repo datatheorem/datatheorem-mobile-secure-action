@@ -68,7 +68,7 @@ Defaults to 300 seconds (5 minutes).
 ### Example with Vulnerability Blocking
 ```yaml
 - name: Upload to Data Theorem with blocking if high or medium vulnerabilities are found
-  uses: datatheorem/datatheorem-mobile-secure-action@v2.3.1
+  uses: datatheorem/datatheorem-mobile-secure-action@v2.5.1
   with:
     UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
     DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
@@ -79,7 +79,7 @@ Defaults to 300 seconds (5 minutes).
 ### Example with Vulnerability Warnings
 ```yaml
 - name: Upload to Data Theorem with warnings for high severity vulnerabilities
-  uses: datatheorem/datatheorem-mobile-secure-action@v2.3.1
+  uses: datatheorem/datatheorem-mobile-secure-action@v2.5.1
   with:
     UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
     DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
@@ -90,7 +90,7 @@ Defaults to 300 seconds (5 minutes).
 ### Example with Both Blocking and Warnings
 ```yaml
 - name: Upload to Data Theorem with blocking on high and warnings on medium vulnerabilities
-  uses: datatheorem/datatheorem-mobile-secure-action@v2.3.1
+  uses: datatheorem/datatheorem-mobile-secure-action@v2.5.1
   with:
     UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
     DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
@@ -123,7 +123,7 @@ jobs:
       - name: Build debug APK
         run: bash ./gradlew assembleDebug
       - name: Upload to Data Theorem
-        uses: datatheorem/datatheorem-mobile-secure-action@v2.3.1
+        uses: datatheorem/datatheorem-mobile-secure-action@v2.5.1
         with:
           UPLOAD_BINARY_PATH: "./app/build/outputs/apk/debug/app-debug.apk"
           DT_UPLOAD_API_KEY: ${{ secrets.DT_UPLOAD_API_KEY }}
