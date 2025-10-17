@@ -105,6 +105,17 @@ function run() {
         const external_id = core.getInput("EXTERNAL_ID");
         const block_on_severity = core.getInput("BLOCK_ON_SEVERITY");
         const warn_on_severity = core.getInput("WARN_ON_SEVERITY");
+        const polling_timeout = core.getInput("POLLING_TIMEOUT");
+        var parsed_polling_timeout;
+        if (polling_timeout) {
+            parsed_polling_timeout = parseInt(polling_timeout, 10);
+            if (isNaN(parsed_polling_timeout)) {
+                throw new Error("POLLING_TIMEOUT must be a number");
+            }
+            if (parsed_polling_timeout <= 0) {
+                throw new Error("POLLING_TIMEOUT must be greater than 0");
+            }
+        }
         // Validate severity levels
         if (block_on_severity &&
             !["HIGH", "MEDIUM", "LOW"].includes(block_on_severity.toUpperCase())) {
@@ -259,8 +270,11 @@ function run() {
         }
         for (const scan of scan_info) {
             const { mobile_app_id, scan_id } = scan;
-            // Poll for scan completion with 30-second intervals
-            const maxWaitTime = 300000; // 5 minutes
+            var maxWaitTime = 300000; // 5 minutes
+            if (parsed_polling_timeout) {
+                maxWaitTime = parsed_polling_timeout * 1000;
+            }
+            // Poll for scan completion with 23-second intervals
             const pollInterval = 23000; // 23 seconds
             const startTime = Date.now();
             console.log(`Waiting for scan ${scan_id} to complete...`);
@@ -277,8 +291,9 @@ function run() {
                         continue;
                     }
                     const status_data = yield status_response.json();
-                    if (status_data.static_scan &&
-                        status_data.static_scan.status === "FAILED") {
+                    const scan_status = status_data.static_scan.status || status_data.status;
+                    if (scan_status &&
+                        ["FAILED", "SCAN_ATTEMPT_ERROR", "CANCELLED"].includes(scan_status)) {
                         console.log(`Scan ${scan_id} failed, skipping vulnerability check`);
                         break;
                     }

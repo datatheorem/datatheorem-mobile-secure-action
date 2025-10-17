@@ -60,6 +60,11 @@ When `WARN_ON_SEVERITY` is specified, the action will:
 - `MEDIUM`: Block on medium and high severity vulnerabilities  
 - `LOW`: Block on all severity vulnerabilities (low, medium, high)
 
+### `POLLING_TIMEOUT`
+When `POLLING_TIMEOUT` is specified, the action will stop polling the scan result after the specified time in seconds.
+Defaults to 300 seconds (5 minutes).
+
+
 ### Example with Vulnerability Blocking
 ```yaml
 - name: Upload to Data Theorem with blocking if high or medium vulnerabilities are found
@@ -130,5 +135,6 @@ jobs:
           EXTERNAL_ID: "App_12230045"
           BLOCK_ON_SEVERITY: "HIGH"  # Optional: Block build on high severity vulnerabilities
           WARN_ON_SEVERITY: "MEDIUM"  # Optional: Warn on medium severity vulnerabilities
+          POLLING_TIMEOUT: 300  # Optional: Stop polling the scan result after the specified time 
 
 ```

@@ -64,6 +64,10 @@ inputs:
       Valid values: HIGH, MEDIUM, LOW. If not specified, no warnings will be shown.
       This requires a Data Theorem Mobile Results API Key to be set.
     required: false
+  POLLING_TIMEOUT:
+    description: >
+      Stop polling the scan result after the specified time in seconds, default is 5 minutes.
+    required: false
 runs:
   using: 'node20'
   main: 'main.js'
