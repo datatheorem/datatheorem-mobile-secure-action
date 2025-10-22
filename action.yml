@@ -68,6 +68,10 @@ inputs:
     description: >
       Stop polling the scan result after the specified time in seconds, default is 5 minutes.
     required: false
+  WAIT_FOR_STATIC_SCAN_ONLY:
+    description: >
+      When enabled, waits for the static_scan to be COMPLETED instead of the top-level scan. Default is false.
+    required: false
 runs:
   using: 'node20'
   main: 'main.js'
