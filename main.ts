@@ -326,6 +326,10 @@ async function run() {
     );
   }
 
+  if (wait_for_static_scan_only === 'true') {
+    console.log('WAIT_FOR_STATIC_SCAN_ONLY is enabled: will wait for static_scan completion');
+  }
+
   for (const scan of scan_info) {
     const { mobile_app_id, scan_id } = scan;
 
