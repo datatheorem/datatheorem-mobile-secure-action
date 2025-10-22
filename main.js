@@ -89,6 +89,7 @@ function check_severity_findings(dt_results_api_key, mobile_app_id, results_sinc
     });
 }
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         // Get inputs
         // Mandatory
@@ -106,6 +107,7 @@ function run() {
         const block_on_severity = core.getInput("BLOCK_ON_SEVERITY");
         const warn_on_severity = core.getInput("WARN_ON_SEVERITY");
         const polling_timeout = core.getInput("POLLING_TIMEOUT");
+        const wait_for_static_scan_only = core.getInput("WAIT_FOR_STATIC_SCAN_ONLY");
         var parsed_polling_timeout;
         if (polling_timeout) {
             parsed_polling_timeout = parseInt(polling_timeout, 10);
@@ -291,7 +293,20 @@ function run() {
                         continue;
                     }
                     const status_data = yield status_response.json();
-                    const scan_status = status_data.status;
+                    // Check status based on WAIT_FOR_STATIC_SCAN_ONLY parameter
+                    let scan_status;
+                    if (wait_for_static_scan_only === 'true') {
+                        if ((_a = status_data.static_scan) === null || _a === void 0 ? void 0 : _a.status) {
+                            scan_status = status_data.static_scan.status;
+                        }
+                        else {
+                            console.log(`static_scan field not available for scan ${scan_id}, falling back to overall scan status`);
+                            scan_status = status_data.status;
+                        }
+                    }
+                    else {
+                        scan_status = status_data.status;
+                    }
                     if (scan_status &&
                         ["FAILED", "SCAN_ATTEMPT_ERROR", "CANCELLED"].includes(scan_status)) {
                         console.log(`Scan ${scan_id} failed, skipping vulnerability check`);
