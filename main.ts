@@ -363,7 +363,8 @@ async function run() {
         }
 
         const status_data = await status_response.json();
-        const scan_status = status_data.static_scan?.status || status_data.status;
+        const scan_status = status_data.status;
+
         if (
           scan_status &&
           ["FAILED", "SCAN_ATTEMPT_ERROR", "CANCELLED"].includes(scan_status)
@@ -372,11 +373,8 @@ async function run() {
           break;
         }
 
-        if (
-          !status_data.static_scan ||
-          status_data.static_scan.status !== "COMPLETED"
-        ) {
-          console.log(`Scan ${scan_id} still in progress, waiting...`);
+        if (scan_status !== "COMPLETED") {
+          console.log(`Scan ${scan_id} still in progress (current status: ${scan_status}), waiting...`);
           await new Promise((resolve) => setTimeout(resolve, pollInterval));
           continue;
         }

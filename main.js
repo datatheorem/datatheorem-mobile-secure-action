@@ -89,7 +89,6 @@ function check_severity_findings(dt_results_api_key, mobile_app_id, results_sinc
     });
 }
 function run() {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         // Get inputs
         // Mandatory
@@ -292,15 +291,14 @@ function run() {
                         continue;
                     }
                     const status_data = yield status_response.json();
-                    const scan_status = ((_a = status_data.static_scan) === null || _a === void 0 ? void 0 : _a.status) || status_data.status;
+                    const scan_status = status_data.status;
                     if (scan_status &&
                         ["FAILED", "SCAN_ATTEMPT_ERROR", "CANCELLED"].includes(scan_status)) {
                         console.log(`Scan ${scan_id} failed, skipping vulnerability check`);
                         break;
                     }
-                    if (!status_data.static_scan ||
-                        status_data.static_scan.status !== "COMPLETED") {
-                        console.log(`Scan ${scan_id} still in progress, waiting...`);
+                    if (scan_status !== "COMPLETED") {
+                        console.log(`Scan ${scan_id} still in progress (current status: ${scan_status}), waiting...`);
                         yield new Promise((resolve) => setTimeout(resolve, pollInterval));
                         continue;
                     }
