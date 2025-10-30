@@ -72,6 +72,16 @@ inputs:
     description: >
       When enabled, waits for the static_scan to be COMPLETED instead of the top-level scan. Default is false.
     required: false
+  SEVERITY_CHECK_SCOPE:
+    description: >
+      Controls whether BLOCK_ON_SEVERITY and WARN_ON_SEVERITY check only findings
+      from the current scan or all open findings in the mobile app.
+      Valid values: CURRENT_SCAN, ALL_ISSUES
+      - CURRENT_SCAN: Check only findings discovered in the current scan (default)
+      - ALL_ISSUES: Check all open findings associated with the mobile app
+      Default: CURRENT_SCAN
+    required: false
+    default: 'CURRENT_SCAN'
 runs:
   using: 'node20'
   main: 'main.js'
