@@ -64,6 +64,7 @@ function get_security_findings(dt_results_api_key, mobile_app_id, results_since,
     });
 }
 function check_severity_findings(dt_results_api_key, mobile_app_id, results_since, severity_level, check_scope) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const severity_checks = {
             HIGH: ["HIGH"],
@@ -83,11 +84,14 @@ function check_severity_findings(dt_results_api_key, mobile_app_id, results_sinc
                 throw new Error(`Error fetching security findings for ${severity} severity: HTTP ${findings_response.status}`);
             }
             const findings_data = yield findings_response.json();
-            const count = findings_data.total_count || 0;
-            total_findings += count;
-            if (count > 0) {
-                return { has_findings: true, total_count: total_findings };
+            const count = parseInt((_a = findings_data.pagination_information) === null || _a === void 0 ? void 0 : _a.total_count, 10) || 0;
+            if (count === 0) {
+                console.log(`Found ${count} ${severity} severity findings (results_since: ${effective_results_since})`);
             }
+            total_findings += count;
+        }
+        if (total_findings > 0) {
+            return { has_findings: true, total_count: total_findings };
         }
         return { has_findings: false, total_count: 0 };
     });
@@ -278,8 +282,14 @@ function run() {
         if (warn_on_severity) {
             console.log(`Warning on vulnerabilities with minimum severity: ${warn_on_severity}`);
         }
-        if (wait_for_static_scan_only === 'true') {
-            console.log('WAIT_FOR_STATIC_SCAN_ONLY is enabled: will wait for static_scan completion');
+        if (wait_for_static_scan_only === "true") {
+            console.log("WAIT_FOR_STATIC_SCAN_ONLY is enabled: will wait for static_scan completion");
+        }
+        if (severity_check_scope.toUpperCase() === "ALL_ISSUES") {
+            console.log("SEVERITY_CHECK_SCOPE is set to ALL_ISSUES: checking all open issues in the mobile app");
+        }
+        else {
+            console.log("SEVERITY_CHECK_SCOPE is set to CURRENT_SCAN: checking only issues from the current scan");
         }
         for (const scan of scan_info) {
             const { mobile_app_id, scan_id } = scan;
@@ -290,7 +300,9 @@ function run() {
             // Poll for scan completion with 23-second intervals
             const pollInterval = 23000; // 23 seconds
             const startTime = Date.now();
-            console.log(`Waiting for scan ${scan_id} to complete...`);
+            let status_data = null;
+            let scan_completed = false;
+            let scan_failed = false;
             while (Date.now() - startTime < maxWaitTime) {
                 try {
                     const status_response = yield check_scan_status(dt_results_api_key, mobile_app_id, scan_id);
@@ -303,10 +315,10 @@ function run() {
                         yield new Promise((resolve) => setTimeout(resolve, pollInterval));
                         continue;
                     }
-                    const status_data = yield status_response.json();
+                    status_data = yield status_response.json();
                     // Check status based on WAIT_FOR_STATIC_SCAN_ONLY parameter
                     let scan_status;
-                    if (wait_for_static_scan_only === 'true') {
+                    if (wait_for_static_scan_only === "true") {
                         if ((_a = status_data.static_scan) === null || _a === void 0 ? void 0 : _a.status) {
                             scan_status = status_data.static_scan.status;
                         }
@@ -328,57 +340,8 @@ function run() {
                         yield new Promise((resolve) => setTimeout(resolve, pollInterval));
                         continue;
                     }
-                    console.log(`Scan ${scan_id} completed, checking for security findings...`);
-                    // Use start_date from status_data as results_since
-                    const results_since = status_data.start_date;
-                    if (!results_since) {
-                        console.log(`No start_date found in scan data for ${scan_id}`);
-                        break;
-                    }
-                    // Check for blocking vulnerabilities first
-                    if (block_on_severity) {
-                        try {
-                            const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, results_since, block_on_severity, severity_check_scope);
-                            if (has_findings) {
-                                const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
-                                    ? "in the mobile app"
-                                    : "in this scan";
-                                console.log(`Found ${total_count} security findings ${scope_description} at or above ${block_on_severity} severity level`);
-                                core.setFailed(`Build blocked due to ${total_count} security findings ${scope_description} at or above ${block_on_severity} severity level`);
-                                return;
-                            }
-                            const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
-                                ? "in the mobile app"
-                                : `for scan ${scan_id}`;
-                            console.log(`No security findings found at or above ${block_on_severity} severity level ${scope_description}`);
-                        }
-                        catch (error) {
-                            console.log(`Error checking security findings for scan ${scan_id}: ${error.message}`);
-                            break;
-                        }
-                    }
-                    // Check for warning vulnerabilities
-                    if (warn_on_severity) {
-                        try {
-                            const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, results_since, warn_on_severity, severity_check_scope);
-                            if (has_findings) {
-                                const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
-                                    ? "in the mobile app"
-                                    : `for scan ${scan_id}`;
-                                console.log(`⚠️  WARNING: Found ${total_count} security findings ${scope_description} at or above ${warn_on_severity} severity level`);
-                                console.log(`⚠️  These findings do not block the build, but should be reviewed and addressed.`);
-                            }
-                            else {
-                                const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
-                                    ? "in the mobile app"
-                                    : `for scan ${scan_id}`;
-                                console.log(`No security findings found at or above ${warn_on_severity} severity level ${scope_description}`);
-                            }
-                        }
-                        catch (error) {
-                            console.log(`Error checking security findings for warnings for scan ${scan_id}: ${error.message}`);
-                        }
-                    }
+                    console.log(`Scan ${scan_id} completed`);
+                    scan_completed = true;
                     break;
                 }
                 catch (error) {
@@ -388,6 +351,74 @@ function run() {
             }
             if (Date.now() - startTime >= maxWaitTime) {
                 console.log(`Timeout waiting for scan results for scan ${scan_id}`);
+            }
+            // Check for security findings with retry logic (max 3 attempts)
+            const maxAttempts = 3;
+            const retryInterval = 5000; // 5 seconds
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (scan_failed &&
+                    severity_check_scope.toUpperCase() === "CURRENT_SCAN") {
+                    // Skip findings check if scan failed in CURRENT_SCAN mode
+                    break;
+                }
+                try {
+                    let results_since;
+                    if (severity_check_scope.toUpperCase() === "ALL_ISSUES") {
+                        results_since = "";
+                    }
+                    else {
+                        if (!status_data || !status_data.start_date) {
+                            console.log(`No start_date found in scan data for ${scan_id}`);
+                            break;
+                        }
+                        results_since = status_data.start_date;
+                    }
+                    // Check for blocking vulnerabilities first
+                    if (block_on_severity) {
+                        const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, results_since, block_on_severity, severity_check_scope);
+                        if (has_findings) {
+                            const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
+                                ? "in the mobile app"
+                                : "in this scan";
+                            console.log(`Found ${total_count} security findings ${scope_description} at or above ${block_on_severity} severity level`);
+                            core.setFailed(`Build blocked due to ${total_count} security findings ${scope_description} at or above ${block_on_severity} severity level`);
+                            return;
+                        }
+                        const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
+                            ? "in the mobile app"
+                            : `for scan ${scan_id}`;
+                        console.log(`No security findings found at or above ${block_on_severity} severity level ${scope_description}`);
+                    }
+                    // Check for warning vulnerabilities
+                    if (warn_on_severity) {
+                        const { has_findings, total_count } = yield check_severity_findings(dt_results_api_key, mobile_app_id, results_since, warn_on_severity, severity_check_scope);
+                        if (has_findings) {
+                            const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
+                                ? "in the mobile app"
+                                : `for scan ${scan_id}`;
+                            console.log(`⚠️  WARNING: Found ${total_count} security findings ${scope_description} at or above ${warn_on_severity} severity level`);
+                            console.log(`⚠️  These findings do not block the build, but should be reviewed and addressed.`);
+                        }
+                        else {
+                            const scope_description = severity_check_scope.toUpperCase() === "ALL_ISSUES"
+                                ? "in the mobile app"
+                                : `for scan ${scan_id}`;
+                            console.log(`No security findings found at or above ${warn_on_severity} severity level ${scope_description}`);
+                        }
+                    }
+                    // Successfully checked findings, exit retry loop
+                    break;
+                }
+                catch (error) {
+                    console.log(`Error checking security findings for ${scan_id} (attempt ${attempt}/${maxAttempts}): ${error.message}`);
+                    if (attempt < maxAttempts) {
+                        console.log(`Retrying in ${retryInterval / 1000} seconds...`);
+                        yield new Promise((resolve) => setTimeout(resolve, retryInterval));
+                    }
+                    else {
+                        console.log(`Failed to check security findings after ${maxAttempts} attempts`);
+                    }
+                }
             }
         }
         core.setOutput("responses", output);
