@@ -64,8 +64,8 @@ function get_security_findings(dt_results_api_key, mobile_app_id, results_since,
     });
 }
 function check_severity_findings(dt_results_api_key, mobile_app_id, results_since, severity_level, check_scope) {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const severity_checks = {
             HIGH: ["HIGH"],
             MEDIUM: ["HIGH", "MEDIUM"],
@@ -97,8 +97,8 @@ function check_severity_findings(dt_results_api_key, mobile_app_id, results_sinc
     });
 }
 function run() {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         // Get inputs
         // Mandatory
         const dt_upload_api_key = core.getInput("DT_UPLOAD_API_KEY");
