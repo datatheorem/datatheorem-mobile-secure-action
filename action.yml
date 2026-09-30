@@ -83,7 +83,7 @@ inputs:
     required: false
     default: 'CURRENT_SCAN'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'main.js'
 branding:
   color: 'blue'
