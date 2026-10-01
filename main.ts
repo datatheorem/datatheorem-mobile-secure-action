@@ -178,8 +178,12 @@ async function run() {
 
   // Mask the sensitive fields
   core.setSecret(dt_upload_api_key);
-  core.setSecret(dt_results_api_key);
-  core.setSecret(password);
+  if (dt_results_api_key) {
+    core.setSecret(dt_results_api_key);
+  }
+  if (password) {
+    core.setSecret(password);
+  }
 
   // Check that the inputs are set
   if (!dt_upload_api_key) {
